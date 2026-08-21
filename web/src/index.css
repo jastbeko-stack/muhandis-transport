@@ -1,0 +1,184 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* خطوط المهندس — design system. All colors are HSL. */
+
+@layer base {
+  :root {
+    --background: 214 40% 96%;
+    --foreground: 222 45% 14%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 45% 14%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 45% 14%;
+
+    --primary: 222 66% 21%;
+    --primary-foreground: 210 60% 98%;
+
+    --secondary: 214 38% 93%;
+    --secondary-foreground: 222 55% 20%;
+
+    --muted: 214 32% 93%;
+    --muted-foreground: 217 15% 45%;
+
+    --accent: 41 92% 56%;
+    --accent-foreground: 30 60% 12%;
+
+    --destructive: 0 72% 48%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 28% 87%;
+    --input: 214 28% 87%;
+    --ring: 222 66% 30%;
+
+    --radius: 0.85rem;
+
+    /* brand tokens */
+    --navy: 222 66% 21%;
+    --navy-deep: 223 70% 15%;
+    --gold: 41 92% 56%;
+    --whatsapp: 142 70% 39%;
+    --girls: 336 74% 62%;
+    --mixed: 214 70% 52%;
+    --success: 152 55% 38%;
+
+    --panel: 0 0% 100%;
+    --panel-foreground: 222 45% 14%;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 45% 18%;
+    --sidebar-primary: 222 66% 21%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 214 38% 94%;
+    --sidebar-accent-foreground: 222 55% 20%;
+    --sidebar-border: 214 28% 88%;
+    --sidebar-ring: 222 66% 30%;
+  }
+
+  .dark {
+    --background: 222 52% 7%;
+    --foreground: 210 34% 94%;
+
+    --card: 222 44% 11%;
+    --card-foreground: 210 34% 94%;
+
+    --popover: 222 44% 11%;
+    --popover-foreground: 210 34% 94%;
+
+    --primary: 219 78% 60%;
+    --primary-foreground: 222 60% 10%;
+
+    --secondary: 222 32% 17%;
+    --secondary-foreground: 210 34% 94%;
+
+    --muted: 222 30% 16%;
+    --muted-foreground: 215 18% 66%;
+
+    --accent: 41 92% 58%;
+    --accent-foreground: 30 60% 10%;
+
+    --destructive: 0 68% 52%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 26% 20%;
+    --input: 220 26% 20%;
+    --ring: 219 78% 60%;
+
+    --navy: 222 52% 12%;
+    --navy-deep: 223 55% 8%;
+    --panel: 222 44% 11%;
+    --panel-foreground: 210 34% 94%;
+
+    --sidebar-background: 222 44% 11%;
+    --sidebar-foreground: 210 34% 92%;
+    --sidebar-primary: 219 78% 60%;
+    --sidebar-primary-foreground: 222 60% 10%;
+    --sidebar-accent: 222 32% 17%;
+    --sidebar-accent-foreground: 210 34% 94%;
+    --sidebar-border: 220 26% 20%;
+    --sidebar-ring: 219 78% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Tajawal", "Cairo", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-display {
+    font-family: "Cairo", "Tajawal", system-ui, sans-serif;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+}
+
+@layer components {
+  .brand-surface {
+    background:
+      radial-gradient(120% 140% at 85% -10%, hsl(219 60% 34% / 0.85), transparent 55%),
+      radial-gradient(90% 120% at 5% 0%, hsl(199 70% 32% / 0.55), transparent 60%),
+      linear-gradient(180deg, hsl(var(--navy)) 0%, hsl(var(--navy-deep)) 100%);
+  }
+
+  .hero-grid::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(to left, hsl(0 0% 100% / 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(0 0% 100% / 0.05) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(circle at 70% 20%, black, transparent 75%);
+    pointer-events: none;
+  }
+
+  .card-surface {
+    @apply rounded-2xl border border-border bg-card shadow-[0_1px_2px_hsl(222_45%_14%/0.05),0_12px_30px_-18px_hsl(222_45%_14%/0.35)];
+  }
+
+  .admin-panel {
+    background: linear-gradient(180deg, hsl(223 58% 9%) 0%, hsl(224 60% 6%) 100%);
+  }
+
+  .admin-card {
+    @apply rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-sm;
+  }
+}
+
+/* Leaflet tweaks */
+.leaflet-container {
+  font-family: "Tajawal", system-ui, sans-serif;
+  background: hsl(var(--muted));
+}
+
+.leaflet-control-attribution {
+  font-size: 10px;
+}
+
+.leaflet-bar a {
+  color: hsl(var(--foreground));
+}
+
+.pin-marker {
+  filter: drop-shadow(0 8px 10px hsl(222 45% 14% / 0.35));
+}
