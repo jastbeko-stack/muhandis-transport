@@ -17,6 +17,7 @@ interface PlatformContextType {
   rejectLine: (id: string) => void;
   toggleVip: (id: string) => void;
   removeLine: (id: string) => void;
+  updateLineSeats: (id: string, seats: number) => void;
   submitCoverageRequest: (data: Omit<CoverageRequest, "id" | "createdAt">) => CoverageRequest;
   resetDemoData: () => void;
 }
@@ -118,14 +119,39 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
     const newLine: TransportLine = {
       ...data,
       id: `ln-${Date.now().toString(36)}`,
-      rating: 0,
-      ratingCount: 0,
-      status: "pending",
-      isVip: false,
-      vipFeePaid: data.vipRequested,
+      rating: 5.0,
+      ratingCount: 1,
+      status: "active",
+      isVip: Boolean(data.vipRequested),
+      vipFeePaid: Boolean(data.vipRequested),
       createdAt: new Date().toISOString(),
     };
     setLines((prev) => [newLine, ...prev]);
+
+    if (isSupabaseConfigured) {
+      supabaseService.createLine({
+        id: newLine.id,
+        driver_name: newLine.driverName,
+        driver_phone: newLine.driverPhone,
+        university_id: newLine.universityId,
+        from_area: newLine.fromArea,
+        to_area: newLine.toArea,
+        morning_shift: newLine.shift === "morning" || newLine.shift === "full",
+        evening_shift: newLine.shift === "evening" || newLine.shift === "full",
+        seats_available: newLine.seatsAvailable,
+        total_seats: newLine.vehicle.seats,
+        monthly_price: newLine.monthlyPrice,
+        depart_time: newLine.departTime,
+        return_time: newLine.returnTime,
+        vehicle_type: newLine.vehicle.kind === "van" ? "فان" : newLine.vehicle.kind === "bus" ? "باص" : "صالون",
+        vehicle_model: newLine.vehicle.model,
+        air_conditioned: newLine.hasAc,
+        punctuality: 98,
+        is_vip: newLine.isVip,
+        status: "approved",
+      }).catch((err) => console.warn("Supabase createLine failed:", err));
+    }
+
     return newLine;
   }, []);
 
@@ -155,6 +181,17 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
     setLines((prev) => prev.filter((item) => item.id !== id));
   }, []);
 
+  const updateLineSeats = useCallback((id: string, seats: number) => {
+    setLines((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, seatsAvailable: seats } : item))
+    );
+    if (isSupabaseConfigured) {
+      supabaseService.updateLineSeats(id, seats).catch((err) =>
+        console.warn("Supabase updateLineSeats failed:", err)
+      );
+    }
+  }, []);
+
   const submitCoverageRequest = useCallback(
     (data: Omit<CoverageRequest, "id" | "createdAt">) => {
       const newRequest: CoverageRequest = {
@@ -163,6 +200,20 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
         createdAt: new Date().toISOString(),
       };
       setCoverageRequests((prev) => [newRequest, ...prev]);
+
+      if (isSupabaseConfigured) {
+        supabaseService.submitCoverageRequest({
+          id: newRequest.id,
+          student_name: newRequest.studentName,
+          phone: newRequest.phone,
+          university_id: newRequest.universityId,
+          area: newRequest.area,
+          lat: newRequest.location?.lat,
+          lng: newRequest.location?.lng,
+          status: "pending",
+        }).catch((err) => console.warn("Supabase submitCoverageRequest failed:", err));
+      }
+
       return newRequest;
     },
     []
@@ -192,6 +243,7 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
       rejectLine,
       toggleVip,
       removeLine,
+      updateLineSeats,
       submitCoverageRequest,
       resetDemoData,
     }),
@@ -209,6 +261,7 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
       rejectLine,
       toggleVip,
       removeLine,
+      updateLineSeats,
       submitCoverageRequest,
       resetDemoData,
     ]

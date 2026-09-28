@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import type { AuthUser, UserRole } from "../types";
 import { UNIVERSITIES, AREAS } from "../data/initialData";
+import { supabaseService, isSupabaseConfigured } from "../lib/supabase";
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -58,6 +59,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         totalSeats: role === "driver" ? 4 : undefined,
       };
       setUser(newUser);
+
+      if (isSupabaseConfigured) {
+        try {
+          await supabaseService.createProfile({
+            phone: cleanPhone,
+            name: newUser.name,
+            role,
+            area: newUser.area || "الزبير",
+            vehicle_model: newUser.vehicleModel || null,
+            vehicle_kind: newUser.vehicleKind || null,
+            total_seats: newUser.totalSeats || 4,
+          });
+        } catch (err) {
+          console.warn("Failed to sync profile to Supabase:", err);
+        }
+      }
+
       return true;
     },
     []
@@ -79,6 +97,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         totalSeats: role === "driver" ? 4 : undefined,
       };
       setUser(newUser);
+
+      if (isSupabaseConfigured) {
+        try {
+          await supabaseService.createProfile({
+            phone: newUser.phone,
+            name: newUser.name,
+            email: newUser.email,
+            role,
+            area: newUser.area || "الزبير",
+            vehicle_model: newUser.vehicleModel || null,
+            vehicle_kind: newUser.vehicleKind || null,
+            total_seats: newUser.totalSeats || 4,
+          });
+        } catch (err) {
+          console.warn("Failed to sync profile to Supabase:", err);
+        }
+      }
+
       return true;
     },
     []
@@ -90,6 +126,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       id: `usr-${Date.now().toString(36)}`,
     };
     setUser(newUser);
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabaseService.createProfile({
+          phone: newUser.phone,
+          name: newUser.name,
+          email: newUser.email || null,
+          role: newUser.role,
+          university_id: newUser.universityId || null,
+          area: newUser.area || "الزبير",
+          vehicle_model: newUser.vehicleModel || null,
+          vehicle_kind: newUser.vehicleKind || null,
+          total_seats: newUser.totalSeats || 4,
+        });
+      } catch (err) {
+        console.warn("Failed to sync profile to Supabase:", err);
+      }
+    }
+
     return true;
   }, []);
 

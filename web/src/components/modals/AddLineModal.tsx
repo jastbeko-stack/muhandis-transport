@@ -97,7 +97,7 @@ export const AddLineModal: React.FC<AddLineModalProps> = ({ open, onOpenChange }
     };
 
     submitLine(payload);
-    toast.success("تم إرسال طلبك بنجاح! سيقوم المشرف بمراجعة الخط ونشره خلال وقت قصير.");
+    toast.success("تم حفظ ونشر خطك بنجاح! أصبح خطك معروضاً الآن للطلاب على المنصة.");
     onOpenChange(false);
   };
 

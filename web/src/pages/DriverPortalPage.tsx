@@ -24,7 +24,7 @@ import { toast } from "sonner";
 
 export const DriverPortalPage: React.FC = () => {
   const { user, logout, switchRole } = useAuth();
-  const { lines, approveLine } = usePlatform();
+  const { lines, approveLine, updateLineSeats } = usePlatform();
   const [addLineOpen, setAddLineOpen] = useState(false);
 
   // Find driver's line or default to first line for demo
@@ -45,6 +45,9 @@ export const DriverPortalPage: React.FC = () => {
   const handleUpdateSeats = (newCount: number) => {
     if (newCount < 0 || newCount > totalSeats) return;
     setAvailableSeats(newCount);
+    if (driverLine) {
+      updateLineSeats(driverLine.id, newCount);
+    }
     toast.success(`تم تحديث المقاعد المتاحة إلى: ${newCount}`);
   };
 

@@ -18,6 +18,22 @@ export const supabase = createClient(
 
 // Helper database services
 export const supabaseService = {
+  // Save or update user profile (students & drivers)
+  async createProfile(profileData: Record<string, unknown>) {
+    if (!isSupabaseConfigured) return null;
+    const { data, error } = await supabase
+      .from("profiles")
+      .upsert([profileData], { onConflict: "phone" })
+      .select()
+      .single();
+
+    if (error) {
+      console.warn("Supabase createProfile error:", error.message);
+      return null;
+    }
+    return data;
+  },
+
   // Fetch approved transport lines
   async getLines() {
     if (!isSupabaseConfigured) return null;

@@ -10,7 +10,8 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { UNIVERSITIES, AREAS } from "../data/initialData";
+import { usePlatform } from "../context/PlatformContext";
+import { UNIVERSITIES, AREAS, AREA_COORDINATES, BASRA_CENTER } from "../data/initialData";
 import type { UserRole } from "../types";
 import { toast } from "sonner";
 import { cn } from "../utils/formatters";
@@ -21,6 +22,7 @@ interface AuthPageProps {
 
 export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
   const { loginWithPhone, loginWithEmail, register, quickDemoLogin } = useAuth();
+  const { submitLine } = usePlatform();
 
   // Selected Role: student vs driver
   const [role, setRole] = useState<UserRole>("student");
@@ -54,19 +56,49 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
           return;
         }
 
+        const cleanPhone = phone.trim() || "07701234567";
+        const totalSeats = vehicleKind === "sedan" ? 4 : vehicleKind === "van" ? 14 : 24;
+
         await register({
           name: name.trim(),
-          phone: phone.trim() || "07701234567",
+          phone: cleanPhone,
           email: email.trim() || undefined,
           role,
           universityId: role === "student" ? universityId : undefined,
           area,
           vehicleModel: role === "driver" ? vehicleModel : undefined,
           vehicleKind: role === "driver" ? vehicleKind : undefined,
-          totalSeats: role === "driver" ? (vehicleKind === "sedan" ? 4 : vehicleKind === "van" ? 14 : 24) : undefined,
+          totalSeats: role === "driver" ? totalSeats : undefined,
         });
 
-        toast.success(`أهلاً بك يا ${name}! تم إنشاء حسابك كـ ${role === "student" ? "طالب" : "سائق"} بنجاح.`);
+        if (role === "driver") {
+          const selectedUni = UNIVERSITIES.find((u) => u.id === universityId);
+          submitLine({
+            driverName: name.trim(),
+            driverPhone: cleanPhone,
+            universityId,
+            fromArea: area,
+            toArea: selectedUni ? selectedUni.short : area,
+            vehicle: {
+              kind: vehicleKind,
+              model: vehicleModel.trim() || "صالون كيا سيراتو",
+              seats: totalSeats,
+            },
+            seatsAvailable: Math.max(1, totalSeats - 1),
+            monthlyPrice: 35000,
+            shift: "morning",
+            gender: "mixed",
+            departTime: "07:30 ص",
+            returnTime: "02:00 م",
+            hasAc: true,
+            isPunctual: true,
+            vipRequested: false,
+            startPoint: AREA_COORDINATES[area] || BASRA_CENTER,
+          });
+          toast.success(`أهلاً بك كابتن ${name}! تم حفظ بياناتك ونشر خطك بنجاح في الموقع.`);
+        } else {
+          toast.success(`أهلاً بك يا ${name}! تم إنشاء حسابك كطالب بنجاح.`);
+        }
       } else {
         if (method === "phone") {
           if (!phone.trim()) {
