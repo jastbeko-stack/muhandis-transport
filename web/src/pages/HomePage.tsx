@@ -13,6 +13,7 @@ import {
   Plus,
   Minus,
   X,
+  Layers,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { usePlatform } from "../context/PlatformContext";
@@ -35,6 +36,10 @@ export const HomePage: React.FC = () => {
 
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
+  const currentTileLayerRef = useRef<L.TileLayer | null>(null);
+
+  // Map layer mode: 'streets' (Google Roads) or 'satellite' (Google Hybrid)
+  const [mapType, setMapType] = useState<"streets" | "satellite">("streets");
 
   // Form State matching screenshot
   const [fromArea, setFromArea] = useState<string>("");
@@ -58,7 +63,7 @@ export const HomePage: React.FC = () => {
     if (!mapContainerRef.current) return;
     if (mapInstanceRef.current) return;
 
-    // Create Map instance
+    // Create Map instance with mobile-touch options enabled
     const map = L.map(mapContainerRef.current, {
       center: [MAP_DEFAULT_CENTER.lat, MAP_DEFAULT_CENTER.lng],
       zoom: MAP_DEFAULT_ZOOM,
@@ -68,18 +73,21 @@ export const HomePage: React.FC = () => {
       touchZoom: true,
       scrollWheelZoom: true,
       doubleClickZoom: true,
+      boxZoom: true,
     });
 
-    // CartoDB Voyager tiles (clean, beautiful pastel colors, Arabic Basra street labels)
-    L.tileLayer(
-      "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
+    // Real Google Maps Road Tile Layer with authentic Arabic street names & colors
+    const tileLayer = L.tileLayer(
+      "https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=ar",
       {
-        subdomains: ["a", "b", "c", "d"],
-        maxZoom: 19,
+        subdomains: ["0", "1", "2", "3"],
+        maxZoom: 20,
       }
     ).addTo(map);
 
-    // Call invalidateSize multiple times to guarantee zero grey tiles
+    currentTileLayerRef.current = tileLayer;
+
+    // Call invalidateSize multiple times to guarantee immediate loading without grey screen
     setTimeout(() => map.invalidateSize(), 50);
     setTimeout(() => map.invalidateSize(), 250);
     setTimeout(() => map.invalidateSize(), 600);
@@ -88,13 +96,13 @@ export const HomePage: React.FC = () => {
     const pulsingDotIcon = L.divIcon({
       className: "custom-pulse-marker",
       html: `
-        <div style="position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; transform: translate(-50%, -50%);">
-          <div style="position: absolute; width: 36px; height: 36px; border-radius: 9999px; background-color: rgba(59, 130, 246, 0.28); animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
-          <div style="position: absolute; width: 22px; height: 22px; border-radius: 9999px; background-color: rgba(59, 130, 246, 0.35);"></div>
-          <div style="position: relative; width: 13px; height: 13px; border-radius: 9999px; background-color: #3b82f6; border: 2.5px solid #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>
+        <div style="position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; transform: translate(-50%, -50%);">
+          <div style="position: absolute; width: 40px; height: 40px; border-radius: 9999px; background-color: rgba(59, 130, 246, 0.28); animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+          <div style="position: absolute; width: 24px; height: 24px; border-radius: 9999px; background-color: rgba(59, 130, 246, 0.35);"></div>
+          <div style="position: relative; width: 14px; height: 14px; border-radius: 9999px; background-color: #3b82f6; border: 2.5px solid #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.35);"></div>
         </div>
       `,
-      iconSize: [40, 40],
+      iconSize: [44, 44],
       iconAnchor: [0, 0],
     });
 
@@ -109,7 +117,7 @@ export const HomePage: React.FC = () => {
         className: "custom-uni-pin",
         html: `
           <div style="transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; cursor: pointer;">
-            <div style="background: #12295E; color: #F2B233; padding: 4px 8px; border-radius: 9999px; font-size: 11px; font-weight: 800; border: 2px solid white; box-shadow: 0 3px 8px rgba(0,0,0,0.25); display: flex; align-items: center; gap: 4px; white-space: nowrap;">
+            <div style="background: #12295E; color: #F2B233; padding: 4px 9px; border-radius: 9999px; font-size: 11px; font-weight: 800; border: 2px solid white; box-shadow: 0 3px 10px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 4px; white-space: nowrap;">
               <span>🎓</span>
               <span>${uni.short}</span>
             </div>
@@ -117,14 +125,14 @@ export const HomePage: React.FC = () => {
             <div style="width: 6px; height: 6px; border-radius: 9999px; background: #F2B233;"></div>
           </div>
         `,
-        iconSize: [40, 40],
+        iconSize: [44, 44],
         iconAnchor: [0, 0],
       });
 
       const m = L.marker([uni.location.lat, uni.location.lng], { icon: uniIcon }).addTo(map);
       m.on("click", () => {
         setToUniversity(uni.name);
-        toast.success(`تم تحديد الوجهة: ${uni.name}`);
+        toast.success(`تم اختيار الوجهة: ${uni.name}`);
       });
     });
 
@@ -132,8 +140,8 @@ export const HomePage: React.FC = () => {
     lines.forEach((line) => {
       const coords = AREA_COORDINATES[line.fromArea];
       if (!coords) return;
-      const lat = coords.lat + (Math.random() - 0.5) * 0.006;
-      const lng = coords.lng + (Math.random() - 0.5) * 0.006;
+      const lat = coords.lat + (Math.random() - 0.5) * 0.005;
+      const lng = coords.lng + (Math.random() - 0.5) * 0.005;
 
       const lineIcon = L.divIcon({
         className: "custom-line-pin",
@@ -153,7 +161,7 @@ export const HomePage: React.FC = () => {
       });
     });
 
-    // Map Click Handler: picks nearest area
+    // Map Click: pick nearest area
     map.on("click", (e) => {
       const lat = e.latlng.lat;
       const lng = e.latlng.lng;
@@ -180,6 +188,30 @@ export const HomePage: React.FC = () => {
     };
   }, [lines]);
 
+  // Toggle Satellite vs Streets map
+  const toggleMapLayer = () => {
+    if (!mapInstanceRef.current) return;
+    const newType = mapType === "streets" ? "satellite" : "streets";
+    setMapType(newType);
+
+    if (currentTileLayerRef.current) {
+      mapInstanceRef.current.removeLayer(currentTileLayerRef.current);
+    }
+
+    const tileUrl =
+      newType === "satellite"
+        ? "https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}&hl=ar" // Google Hybrid (Satellite + Roads & Arabic labels)
+        : "https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=ar"; // Google Standard Roads
+
+    const newLayer = L.tileLayer(tileUrl, {
+      subdomains: ["0", "1", "2", "3"],
+      maxZoom: 20,
+    }).addTo(mapInstanceRef.current);
+
+    currentTileLayerRef.current = newLayer;
+    toast.info(newType === "satellite" ? "تم تفعيل عرض القمر الصناعي" : "تم تفعيل عرض الشوارع الحقيقي");
+  };
+
   // Pan map when an area is selected
   const handleSelectArea = (area: string) => {
     setFromArea(area);
@@ -204,15 +236,40 @@ export const HomePage: React.FC = () => {
     }
   };
 
+  // Geolocation button (Current user position in Basra)
+  const handleLocateMe = () => {
+    if (!navigator.geolocation) {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.flyTo([MAP_DEFAULT_CENTER.lat, MAP_DEFAULT_CENTER.lng], MAP_DEFAULT_ZOOM, { duration: 0.8 });
+      }
+      return;
+    }
+
+    toast.info("جاري تحديد موقعك...");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.flyTo([latitude, longitude], 15, { duration: 1.2 });
+        }
+        toast.success("تم الانتقال إلى موقعك في البصرة!");
+      },
+      () => {
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.flyTo([MAP_DEFAULT_CENTER.lat, MAP_DEFAULT_CENTER.lng], MAP_DEFAULT_ZOOM, { duration: 0.8 });
+        }
+        toast.info("تم ضبط الخريطة على مركز البصرة");
+      },
+      { enableHighAccuracy: true, timeout: 5000 }
+    );
+  };
+
   // Main CTA Button Click ("سجّل خطك")
   const handleMainActionClick = () => {
-    // If user is driver, open line registration directly
     if (user?.role === "driver") {
       setAddLineModalOpen(true);
       return;
     }
-
-    // If both fields chosen, or user is student: open quick action sheet
     setActionSheetOpen(true);
   };
 
@@ -227,8 +284,12 @@ export const HomePage: React.FC = () => {
 
   return (
     <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-[#eef3f2]">
-      {/* 1. Fullscreen Map */}
-      <div ref={mapContainerRef} className="absolute inset-0 w-full h-full z-0 cursor-grab active:cursor-grabbing" />
+      {/* 1. Fullscreen Google Map Container */}
+      <div
+        ref={mapContainerRef}
+        className="absolute inset-0 w-full h-full z-0 cursor-grab active:cursor-grabbing touch-none"
+        style={{ touchAction: "none" }}
+      />
 
       {/* 2. Top Floating Controls (Pill & Notification Bell) */}
       <header className="absolute top-2.5 sm:top-4 inset-x-3 sm:inset-x-4 z-30 flex items-center justify-between pointer-events-none pt-[max(0.2rem,env(safe-area-inset-top,0px))]">
@@ -237,7 +298,7 @@ export const HomePage: React.FC = () => {
           <button
             type="button"
             onClick={() => setCityMenuOpen(!cityMenuOpen)}
-            className="flex items-center gap-1.5 rounded-full bg-white/95 px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-black text-gray-800 shadow-[0_4px_16px_rgba(0,0,0,0.1)] border border-gray-150 backdrop-blur-md transition-all hover:bg-white active:scale-95"
+            className="flex items-center gap-1.5 rounded-full bg-white/95 px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-black text-gray-800 shadow-[0_4px_16px_rgba(0,0,0,0.15)] border border-gray-150 backdrop-blur-md transition-all hover:bg-white active:scale-95"
             aria-label="اختيار المدينة"
           >
             <ChevronDown className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-500 stroke-[2.5]" />
@@ -282,7 +343,7 @@ export const HomePage: React.FC = () => {
           <button
             type="button"
             onClick={() => setNotifModalOpen(true)}
-            className="relative flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full bg-white/95 text-gray-800 shadow-[0_4px_16px_rgba(0,0,0,0.1)] border border-gray-150 backdrop-blur-md transition-all hover:bg-white active:scale-95"
+            className="relative flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full bg-white/95 text-gray-800 shadow-[0_4px_16px_rgba(0,0,0,0.15)] border border-gray-150 backdrop-blur-md transition-all hover:bg-white active:scale-95"
             aria-label="التنبيهات والإشعارات"
           >
             <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700 stroke-[2]" />
@@ -293,8 +354,20 @@ export const HomePage: React.FC = () => {
         </div>
       </header>
 
-      {/* Floating Map Controls: Zoom In, Zoom Out, Recenter */}
+      {/* Floating Map Controls: Zoom In, Zoom Out, Layer Toggle, Geolocation */}
       <div className="absolute bottom-[calc(16.5rem+env(safe-area-inset-bottom,0px))] right-3 sm:right-4 z-20 flex flex-col gap-1.5 pointer-events-auto">
+        {/* Layer toggle (Satellite / Road) */}
+        <button
+          type="button"
+          onClick={toggleMapLayer}
+          className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-white/95 text-gray-700 shadow-md border border-gray-150 active:scale-95 transition-all"
+          title="تبديل الخريطة / قمر صناعي"
+          aria-label="تبديل الخريطة"
+        >
+          <Layers className="h-4 w-4 sm:h-5 sm:w-5 text-[#246158]" />
+        </button>
+
+        {/* Zoom In */}
         <button
           type="button"
           onClick={() => mapInstanceRef.current?.zoomIn()}
@@ -303,6 +376,8 @@ export const HomePage: React.FC = () => {
         >
           <Plus className="h-4 w-4 text-gray-700" />
         </button>
+
+        {/* Zoom Out */}
         <button
           type="button"
           onClick={() => mapInstanceRef.current?.zoomOut()}
@@ -311,18 +386,13 @@ export const HomePage: React.FC = () => {
         >
           <Minus className="h-4 w-4 text-gray-700" />
         </button>
+
+        {/* Recenter / Geolocation */}
         <button
           type="button"
-          onClick={() => {
-            if (mapInstanceRef.current) {
-              mapInstanceRef.current.flyTo(
-                [MAP_DEFAULT_CENTER.lat, MAP_DEFAULT_CENTER.lng],
-                MAP_DEFAULT_ZOOM,
-                { duration: 0.8 }
-              );
-            }
-          }}
+          onClick={handleLocateMe}
           className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-white/95 text-gray-700 shadow-md border border-gray-150 active:scale-95 transition-all"
+          title="موقعي الحالي"
           aria-label="إعادة ضبط الخريطة"
         >
           <Compass className="h-4 w-4 sm:h-5 sm:w-5 text-[#246158]" />
@@ -331,7 +401,7 @@ export const HomePage: React.FC = () => {
 
       {/* 3. Bottom Floating Card ("وين خطك اليومي؟") */}
       <div className="absolute bottom-[calc(3.85rem+env(safe-area-inset-bottom,0px))] sm:bottom-20 inset-x-3 sm:inset-x-6 z-30 max-w-md mx-auto pointer-events-auto">
-        <div className="rounded-2xl sm:rounded-3xl bg-white dark:bg-card p-3.5 sm:p-5 shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-gray-150/90 dark:border-border transition-all">
+        <div className="rounded-2xl sm:rounded-3xl bg-white dark:bg-card p-3.5 sm:p-5 shadow-[0_10px_35px_rgba(0,0,0,0.14)] border border-gray-150/90 dark:border-border transition-all">
           {/* Card Title */}
           <h2 className="text-base sm:text-2xl font-black text-[#1e293b] dark:text-foreground text-start font-display mb-2.5 sm:mb-4">
             وين خطك اليومي؟

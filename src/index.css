@@ -64,8 +64,9 @@
 
   html, body, #root {
     width: 100%;
-    min-height: 100%;
-    -webkit-overflow-scrolling: touch;
+    height: 100%;
+    margin: 0;
+    padding: 0;
     -webkit-tap-highlight-color: transparent;
   }
 
@@ -73,7 +74,15 @@
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
     font-family: 'Cairo', system-ui, sans-serif;
-    overscroll-behavior-y: none;
+  }
+
+  .leaflet-container {
+    width: 100% !important;
+    height: 100% !important;
+    touch-action: none !important;
+    -ms-touch-action: none !important;
+    user-select: none;
+    -webkit-user-select: none;
   }
 }
 
