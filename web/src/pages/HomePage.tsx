@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import {
   MapPin,
   ChevronDown,
@@ -9,14 +10,18 @@ import {
   Search,
   UserPlus,
   Compass,
+  Plus,
+  Minus,
   X,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { usePlatform } from "../context/PlatformContext";
 import { UNIVERSITIES, AREAS, AREA_COORDINATES } from "../data/initialData";
 import type { TransportLine } from "../types";
 import { AddLineModal } from "../components/modals/AddLineModal";
 import { BookingModal } from "../components/modals/BookingModal";
 import { RequestCoverageModal } from "../components/modals/RequestCoverageModal";
+import { toast } from "sonner";
 import { cn } from "../utils/formatters";
 
 // Basra Center coordinates matching user screenshot (Al-Ma'qil / Al-Ablat / Al-Hindiyah)
@@ -26,6 +31,7 @@ const MAP_DEFAULT_ZOOM = 13;
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { lines } = usePlatform();
 
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -58,16 +64,25 @@ export const HomePage: React.FC = () => {
       zoom: MAP_DEFAULT_ZOOM,
       zoomControl: false,
       attributionControl: false,
+      dragging: true,
+      touchZoom: true,
+      scrollWheelZoom: true,
+      doubleClickZoom: true,
     });
 
     // CartoDB Voyager tiles (clean, beautiful pastel colors, Arabic Basra street labels)
     L.tileLayer(
-      "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+      "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
       {
-        subdomains: "abcd",
+        subdomains: ["a", "b", "c", "d"],
         maxZoom: 19,
       }
     ).addTo(map);
+
+    // Call invalidateSize multiple times to guarantee zero grey tiles
+    setTimeout(() => map.invalidateSize(), 50);
+    setTimeout(() => map.invalidateSize(), 250);
+    setTimeout(() => map.invalidateSize(), 600);
 
     // Pulsing Blue Location Dot in the Center (matching user screenshot)
     const pulsingDotIcon = L.divIcon({
@@ -88,6 +103,73 @@ export const HomePage: React.FC = () => {
       interactive: false,
     }).addTo(map);
 
+    // Add Interactive University Markers across Basra
+    UNIVERSITIES.forEach((uni) => {
+      const uniIcon = L.divIcon({
+        className: "custom-uni-pin",
+        html: `
+          <div style="transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; cursor: pointer;">
+            <div style="background: #12295E; color: #F2B233; padding: 4px 8px; border-radius: 9999px; font-size: 11px; font-weight: 800; border: 2px solid white; box-shadow: 0 3px 8px rgba(0,0,0,0.25); display: flex; align-items: center; gap: 4px; white-space: nowrap;">
+              <span>🎓</span>
+              <span>${uni.short}</span>
+            </div>
+            <div style="width: 2px; height: 6px; background: #12295E;"></div>
+            <div style="width: 6px; height: 6px; border-radius: 9999px; background: #F2B233;"></div>
+          </div>
+        `,
+        iconSize: [40, 40],
+        iconAnchor: [0, 0],
+      });
+
+      const m = L.marker([uni.location.lat, uni.location.lng], { icon: uniIcon }).addTo(map);
+      m.on("click", () => {
+        setToUniversity(uni.name);
+        toast.success(`تم تحديد الوجهة: ${uni.name}`);
+      });
+    });
+
+    // Add Active Lines Markers across Basra
+    lines.forEach((line) => {
+      const coords = AREA_COORDINATES[line.fromArea];
+      if (!coords) return;
+      const lat = coords.lat + (Math.random() - 0.5) * 0.006;
+      const lng = coords.lng + (Math.random() - 0.5) * 0.006;
+
+      const lineIcon = L.divIcon({
+        className: "custom-line-pin",
+        html: `
+          <div style="transform: translate(-50%, -50%); cursor: pointer; display: flex; align-items: center; gap: 3px; background: #286058; color: #fff; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; border: 1.5px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.25); white-space: nowrap;">
+            <span>🚐</span>
+            <span>خط ${line.fromArea}</span>
+          </div>
+        `,
+        iconSize: [30, 24],
+        iconAnchor: [0, 0],
+      });
+
+      const lm = L.marker([lat, lng], { icon: lineIcon }).addTo(map);
+      lm.on("click", () => {
+        setBookingLine(line);
+      });
+    });
+
+    // Map Click Handler: picks nearest area
+    map.on("click", (e) => {
+      const lat = e.latlng.lat;
+      const lng = e.latlng.lng;
+      let closestArea = "البصرة";
+      let minDist = Infinity;
+      Object.entries(AREA_COORDINATES).forEach(([area, c]) => {
+        const d = Math.hypot(c.lat - lat, c.lng - lng);
+        if (d < minDist) {
+          minDist = d;
+          closestArea = area;
+        }
+      });
+      setFromArea(closestArea);
+      toast.info(`تم اختيار منطقة الانطلاق: ${closestArea}`);
+    });
+
     mapInstanceRef.current = map;
 
     return () => {
@@ -96,7 +178,7 @@ export const HomePage: React.FC = () => {
         mapInstanceRef.current = null;
       }
     };
-  }, []);
+  }, [lines]);
 
   // Pan map when an area is selected
   const handleSelectArea = (area: string) => {
@@ -144,9 +226,9 @@ export const HomePage: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-[#eef3f2] select-none">
+    <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-[#eef3f2]">
       {/* 1. Fullscreen Map */}
-      <div ref={mapContainerRef} className="absolute inset-0 w-full h-full z-0" />
+      <div ref={mapContainerRef} className="absolute inset-0 w-full h-full z-0 cursor-grab active:cursor-grabbing" />
 
       {/* 2. Top Floating Controls (Pill & Notification Bell) */}
       <header className="absolute top-2.5 sm:top-4 inset-x-3 sm:inset-x-4 z-30 flex items-center justify-between pointer-events-none pt-[max(0.2rem,env(safe-area-inset-top,0px))]">
@@ -211,23 +293,41 @@ export const HomePage: React.FC = () => {
         </div>
       </header>
 
-      {/* Recenter Map Button (Floating bottom-right above card) */}
-      <button
-        type="button"
-        onClick={() => {
-          if (mapInstanceRef.current) {
-            mapInstanceRef.current.flyTo(
-              [MAP_DEFAULT_CENTER.lat, MAP_DEFAULT_CENTER.lng],
-              MAP_DEFAULT_ZOOM,
-              { duration: 1 }
-            );
-          }
-        }}
-        className="absolute bottom-[calc(17.5rem+env(safe-area-inset-bottom,0px))] right-3 sm:right-4 z-20 flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-white/95 text-gray-700 shadow-md border border-gray-150 active:scale-95 transition-all"
-        aria-label="إعادة ضبط الخريطة"
-      >
-        <Compass className="h-4 w-4 sm:h-5 sm:w-5 text-[#246158]" />
-      </button>
+      {/* Floating Map Controls: Zoom In, Zoom Out, Recenter */}
+      <div className="absolute bottom-[calc(16.5rem+env(safe-area-inset-bottom,0px))] right-3 sm:right-4 z-20 flex flex-col gap-1.5 pointer-events-auto">
+        <button
+          type="button"
+          onClick={() => mapInstanceRef.current?.zoomIn()}
+          className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-white/95 text-gray-700 shadow-md border border-gray-150 active:scale-95 transition-all font-bold"
+          aria-label="تكبير الخريطة"
+        >
+          <Plus className="h-4 w-4 text-gray-700" />
+        </button>
+        <button
+          type="button"
+          onClick={() => mapInstanceRef.current?.zoomOut()}
+          className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-white/95 text-gray-700 shadow-md border border-gray-150 active:scale-95 transition-all font-bold"
+          aria-label="تصغير الخريطة"
+        >
+          <Minus className="h-4 w-4 text-gray-700" />
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            if (mapInstanceRef.current) {
+              mapInstanceRef.current.flyTo(
+                [MAP_DEFAULT_CENTER.lat, MAP_DEFAULT_CENTER.lng],
+                MAP_DEFAULT_ZOOM,
+                { duration: 0.8 }
+              );
+            }
+          }}
+          className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-white/95 text-gray-700 shadow-md border border-gray-150 active:scale-95 transition-all"
+          aria-label="إعادة ضبط الخريطة"
+        >
+          <Compass className="h-4 w-4 sm:h-5 sm:w-5 text-[#246158]" />
+        </button>
+      </div>
 
       {/* 3. Bottom Floating Card ("وين خطك اليومي؟") */}
       <div className="absolute bottom-[calc(3.85rem+env(safe-area-inset-bottom,0px))] sm:bottom-20 inset-x-3 sm:inset-x-6 z-30 max-w-md mx-auto pointer-events-auto">
