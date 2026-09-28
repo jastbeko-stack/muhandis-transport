@@ -5,7 +5,6 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { PlatformProvider } from "./context/PlatformContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Navbar } from "./components/layout/Navbar";
-import { Footer } from "./components/layout/Footer";
 import { BottomNav } from "./components/layout/BottomNav";
 import { HomePage } from "./pages/HomePage";
 import { ServicesPage } from "./pages/ServicesPage";
@@ -67,8 +66,6 @@ function AppContent() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </div>
-
-      {!isHomePage && <Footer />}
 
       {/* Mobile-first bottom navigation bar */}
       <BottomNav />
