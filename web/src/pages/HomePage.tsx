@@ -144,28 +144,28 @@ export const HomePage: React.FC = () => {
   };
 
   return (
-    <div className="relative w-full h-[100dvh] overflow-hidden bg-[#eef3f2]">
+    <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-[#eef3f2] select-none">
       {/* 1. Fullscreen Map */}
       <div ref={mapContainerRef} className="absolute inset-0 w-full h-full z-0" />
 
       {/* 2. Top Floating Controls (Pill & Notification Bell) */}
-      <header className="absolute top-4 inset-x-4 z-30 flex items-center justify-between pointer-events-none pt-[env(safe-area-inset-top)]">
+      <header className="absolute top-2.5 sm:top-4 inset-x-3 sm:inset-x-4 z-30 flex items-center justify-between pointer-events-none pt-[max(0.2rem,env(safe-area-inset-top,0px))]">
         {/* Right side in RTL: City Selector Pill (📍 البصرة ⌄) */}
         <div className="relative pointer-events-auto">
           <button
             type="button"
             onClick={() => setCityMenuOpen(!cityMenuOpen)}
-            className="flex items-center gap-1.5 rounded-full bg-white/95 px-4 py-2 text-sm font-black text-gray-800 shadow-[0_4px_16px_rgba(0,0,0,0.1)] border border-gray-150 backdrop-blur-md transition-all hover:bg-white active:scale-95"
+            className="flex items-center gap-1.5 rounded-full bg-white/95 px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-black text-gray-800 shadow-[0_4px_16px_rgba(0,0,0,0.1)] border border-gray-150 backdrop-blur-md transition-all hover:bg-white active:scale-95"
             aria-label="اختيار المدينة"
           >
-            <ChevronDown className="h-4 w-4 text-gray-500 stroke-[2.5]" />
+            <ChevronDown className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-500 stroke-[2.5]" />
             <span className="font-display font-extrabold">{selectedCity}</span>
-            <MapPin className="h-4 w-4 text-[#246158]" />
+            <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-[#246158]" />
           </button>
 
           {/* City Dropdown Menu */}
           {cityMenuOpen && (
-            <div className="absolute top-12 right-0 w-44 rounded-2xl bg-white p-2 shadow-2xl border border-gray-150 z-50 animate-fade-up">
+            <div className="absolute top-11 sm:top-12 right-0 w-44 rounded-2xl bg-white p-2 shadow-2xl border border-gray-150 z-50 animate-fade-up">
               <p className="px-2 py-1 text-[11px] font-bold text-gray-400">المناطق المتاحة:</p>
               {["البصرة", "الزبير", "شط العرب", "الهارثة", "القرنة", "أبو الخصيب"].map((city) => (
                 <button
@@ -200,11 +200,11 @@ export const HomePage: React.FC = () => {
           <button
             type="button"
             onClick={() => setNotifModalOpen(true)}
-            className="relative flex h-11 w-11 items-center justify-center rounded-full bg-white/95 text-gray-800 shadow-[0_4px_16px_rgba(0,0,0,0.1)] border border-gray-150 backdrop-blur-md transition-all hover:bg-white active:scale-95"
+            className="relative flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full bg-white/95 text-gray-800 shadow-[0_4px_16px_rgba(0,0,0,0.1)] border border-gray-150 backdrop-blur-md transition-all hover:bg-white active:scale-95"
             aria-label="التنبيهات والإشعارات"
           >
-            <Bell className="h-5 w-5 text-gray-700 stroke-[2]" />
-            <span className="absolute -top-1 -right-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#ef4444] px-1 text-[10px] font-black text-white shadow-sm border-2 border-white">
+            <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700 stroke-[2]" />
+            <span className="absolute -top-1 -right-1 flex h-4.5 min-w-[18px] sm:h-5 sm:min-w-[20px] items-center justify-center rounded-full bg-[#ef4444] px-1 text-[9px] sm:text-[10px] font-black text-white shadow-sm border-2 border-white">
               19
             </span>
           </button>
@@ -223,56 +223,56 @@ export const HomePage: React.FC = () => {
             );
           }
         }}
-        className="absolute bottom-64 right-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-gray-700 shadow-md border border-gray-150 active:scale-95 transition-all"
+        className="absolute bottom-[calc(17.5rem+env(safe-area-inset-bottom,0px))] right-3 sm:right-4 z-20 flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-white/95 text-gray-700 shadow-md border border-gray-150 active:scale-95 transition-all"
         aria-label="إعادة ضبط الخريطة"
       >
-        <Compass className="h-5 w-5 text-[#246158]" />
+        <Compass className="h-4 w-4 sm:h-5 sm:w-5 text-[#246158]" />
       </button>
 
       {/* 3. Bottom Floating Card ("وين خطك اليومي؟") */}
-      <div className="absolute bottom-[4.8rem] inset-x-3.5 sm:inset-x-6 z-30 max-w-md mx-auto pointer-events-auto">
-        <div className="rounded-3xl bg-white dark:bg-card p-5 shadow-[0_12px_45px_rgba(0,0,0,0.14)] border border-gray-100 dark:border-border transition-all">
+      <div className="absolute bottom-[calc(3.85rem+env(safe-area-inset-bottom,0px))] sm:bottom-20 inset-x-3 sm:inset-x-6 z-30 max-w-md mx-auto pointer-events-auto">
+        <div className="rounded-2xl sm:rounded-3xl bg-white dark:bg-card p-3.5 sm:p-5 shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-gray-150/90 dark:border-border transition-all">
           {/* Card Title */}
-          <h2 className="text-xl sm:text-2xl font-black text-[#1e293b] dark:text-foreground text-start font-display mb-4">
+          <h2 className="text-base sm:text-2xl font-black text-[#1e293b] dark:text-foreground text-start font-display mb-2.5 sm:mb-4">
             وين خطك اليومي؟
           </h2>
 
           {/* Inputs Section */}
-          <div className="rounded-2xl border border-gray-150 dark:border-border bg-white dark:bg-card overflow-hidden divide-y divide-gray-100 dark:divide-border shadow-inner-sm">
+          <div className="rounded-xl sm:rounded-2xl border border-gray-150 dark:border-border bg-white dark:bg-card overflow-hidden divide-y divide-gray-100 dark:divide-border shadow-inner-sm">
             {/* Row 1: Start Location (منين تطلع؟) */}
             <button
               type="button"
               onClick={() => setAreaSheetOpen(true)}
-              className="w-full flex items-center justify-between p-3.5 text-start hover:bg-gray-50/60 dark:hover:bg-muted/40 transition-colors"
+              className="w-full flex items-center justify-between p-2.5 sm:p-3.5 text-start hover:bg-gray-50/60 dark:hover:bg-muted/40 transition-colors"
             >
               <span
                 className={cn(
-                  "text-sm font-bold flex-1 truncate",
+                  "text-xs sm:text-sm font-bold flex-1 truncate",
                   fromArea ? "text-foreground font-black" : "text-gray-400 dark:text-muted-foreground"
                 )}
               >
                 {fromArea ? `منطقة: ${fromArea}` : "منين تطلع؟"}
               </span>
               {/* Teal Ring Icon on Right (RTL) */}
-              <span className="h-4 w-4 rounded-full border-[2.5px] border-[#246158] inline-block shrink-0 ml-1" />
+              <span className="h-3.5 w-3.5 sm:h-4 sm:w-4 rounded-full border-[2.5px] border-[#246158] inline-block shrink-0 ml-1" />
             </button>
 
             {/* Row 2: Destination Location (وين تروح؟) */}
             <button
               type="button"
               onClick={() => setUniSheetOpen(true)}
-              className="w-full flex items-center justify-between p-3.5 text-start hover:bg-gray-50/60 dark:hover:bg-muted/40 transition-colors"
+              className="w-full flex items-center justify-between p-2.5 sm:p-3.5 text-start hover:bg-gray-50/60 dark:hover:bg-muted/40 transition-colors"
             >
               <span
                 className={cn(
-                  "text-sm font-bold flex-1 truncate",
+                  "text-xs sm:text-sm font-bold flex-1 truncate",
                   toUniversity ? "text-foreground font-black" : "text-gray-400 dark:text-muted-foreground"
                 )}
               >
                 {toUniversity ? `الجامعة: ${toUniversity}` : "وين تروح؟"}
               </span>
               {/* Terracotta Solid Square Icon on Right (RTL) */}
-              <span className="h-3.5 w-3.5 rounded-[3px] bg-[#9e4a2e] inline-block shrink-0 ml-1" />
+              <span className="h-3 w-3 sm:h-3.5 sm:w-3.5 rounded-[3px] bg-[#9e4a2e] inline-block shrink-0 ml-1" />
             </button>
           </div>
 
@@ -280,7 +280,7 @@ export const HomePage: React.FC = () => {
           <button
             type="button"
             onClick={handleMainActionClick}
-            className="w-full mt-4 py-3.5 rounded-2xl bg-[#286058] hover:bg-[#204e47] active:scale-[0.98] text-white font-black text-base shadow-[0_4px_16px_rgba(40,96,88,0.3)] transition-all flex items-center justify-center gap-2"
+            className="w-full mt-3 sm:mt-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#286058] hover:bg-[#204e47] active:scale-[0.98] text-white font-black text-sm sm:text-base shadow-[0_4px_16px_rgba(40,96,88,0.3)] transition-all flex items-center justify-center gap-2"
           >
             سجّل خطك
           </button>

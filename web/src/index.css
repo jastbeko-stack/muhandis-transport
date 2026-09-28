@@ -62,10 +62,18 @@
     box-sizing: border-box;
   }
 
+  html, body, #root {
+    width: 100%;
+    min-height: 100%;
+    -webkit-overflow-scrolling: touch;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
     font-family: 'Cairo', system-ui, sans-serif;
+    overscroll-behavior-y: none;
   }
 }
 

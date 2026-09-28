@@ -41,7 +41,9 @@ function AppContent() {
     <div
       className={cn(
         "flex min-h-screen flex-col bg-background text-foreground",
-        !isHomePage && "pb-16 lg:pb-0"
+        isHomePage
+          ? "h-screen overflow-hidden"
+          : "pb-[calc(4.8rem+env(safe-area-inset-bottom,0px))] lg:pb-0"
       )}
     >
       <Toaster position="top-center" dir="rtl" richColors closeButton />
@@ -51,7 +53,7 @@ function AppContent() {
         <Navbar onOpenAddLine={() => setAddLineModalOpen(true)} />
       </div>
 
-      <div className="flex flex-1 flex-col">
+      <div className={cn("flex flex-1 flex-col", isHomePage && "h-full overflow-hidden")}>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/home" element={<HomePage />} />
