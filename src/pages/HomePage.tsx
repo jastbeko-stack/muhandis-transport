@@ -1,376 +1,498 @@
-import React, { useState, useMemo } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import L from "leaflet";
 import {
-  Sparkles,
+  MapPin,
+  ChevronDown,
+  Bell,
+  Check,
   Search,
-  Crown,
-  MapPinned,
-  ShieldCheck,
-  Coins,
-  Send,
-  ArrowLeft,
   UserPlus,
-  LayoutList,
-  GraduationCap,
+  Compass,
+  X,
 } from "lucide-react";
-import { usePlatform } from "../context/PlatformContext";
-import { UNIVERSITIES, AREAS } from "../data/initialData";
+import { useAuth } from "../context/AuthContext";
+import { UNIVERSITIES, AREAS, AREA_COORDINATES } from "../data/initialData";
 import type { TransportLine } from "../types";
-import { LineCard } from "../components/lines/LineCard";
+import { AddLineModal } from "../components/modals/AddLineModal";
 import { BookingModal } from "../components/modals/BookingModal";
 import { RequestCoverageModal } from "../components/modals/RequestCoverageModal";
-import { AddLineModal } from "../components/modals/AddLineModal";
+import { cn } from "../utils/formatters";
+
+// Basra Center coordinates matching user screenshot (Al-Ma'qil / Al-Ablat / Al-Hindiyah)
+const MAP_DEFAULT_CENTER = { lat: 30.528, lng: 47.795 };
+const MAP_DEFAULT_ZOOM = 13;
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const { activeLines, vipLines } = usePlatform();
+  const { user } = useAuth();
 
-  // Search Box Filters
-  const [selectedUni, setSelectedUni] = useState(UNIVERSITIES[0].id);
-  const [selectedArea, setSelectedArea] = useState("all");
-  const [selectedShift, setSelectedShift] = useState("all");
-  const [selectedGender, setSelectedGender] = useState("all");
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
 
-  // Modals
+  // Form State matching screenshot
+  const [fromArea, setFromArea] = useState<string>("");
+  const [toUniversity, setToUniversity] = useState<string>("");
+
+  // Modals & Sheets
+  const [areaSheetOpen, setAreaSheetOpen] = useState(false);
+  const [uniSheetOpen, setUniSheetOpen] = useState(false);
+  const [cityMenuOpen, setCityMenuOpen] = useState(false);
+  const [notifModalOpen, setNotifModalOpen] = useState(false);
+  const [addLineModalOpen, setAddLineModalOpen] = useState(false);
   const [bookingLine, setBookingLine] = useState<TransportLine | null>(null);
   const [coverageModalOpen, setCoverageModalOpen] = useState(false);
-  const [addLineModalOpen, setAddLineModalOpen] = useState(false);
+  const [actionSheetOpen, setActionSheetOpen] = useState(false);
 
-  // Standard non-vip lines preview
-  const regularLinesPreview = useMemo(() => {
-    return activeLines.filter((l) => !l.isVip).slice(0, 6);
-  }, [activeLines]);
+  // Selected City Pill
+  const [selectedCity, setSelectedCity] = useState("البصرة");
 
-  const handleHeroSearch = (e: React.FormEvent) => {
-    e.preventDefault();
+  // Initialize Map
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+    if (mapInstanceRef.current) return;
+
+    // Create Map instance
+    const map = L.map(mapContainerRef.current, {
+      center: [MAP_DEFAULT_CENTER.lat, MAP_DEFAULT_CENTER.lng],
+      zoom: MAP_DEFAULT_ZOOM,
+      zoomControl: false,
+      attributionControl: false,
+    });
+
+    // CartoDB Voyager tiles (clean, beautiful pastel colors, Arabic Basra street labels)
+    L.tileLayer(
+      "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+      {
+        subdomains: "abcd",
+        maxZoom: 19,
+      }
+    ).addTo(map);
+
+    // Pulsing Blue Location Dot in the Center (matching user screenshot)
+    const pulsingDotIcon = L.divIcon({
+      className: "custom-pulse-marker",
+      html: `
+        <div style="position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; transform: translate(-50%, -50%);">
+          <div style="position: absolute; width: 36px; height: 36px; border-radius: 9999px; background-color: rgba(59, 130, 246, 0.28); animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+          <div style="position: absolute; width: 22px; height: 22px; border-radius: 9999px; background-color: rgba(59, 130, 246, 0.35);"></div>
+          <div style="position: relative; width: 13px; height: 13px; border-radius: 9999px; background-color: #3b82f6; border: 2.5px solid #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>
+        </div>
+      `,
+      iconSize: [40, 40],
+      iconAnchor: [0, 0],
+    });
+
+    L.marker([MAP_DEFAULT_CENTER.lat, MAP_DEFAULT_CENTER.lng], {
+      icon: pulsingDotIcon,
+      interactive: false,
+    }).addTo(map);
+
+    mapInstanceRef.current = map;
+
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, []);
+
+  // Pan map when an area is selected
+  const handleSelectArea = (area: string) => {
+    setFromArea(area);
+    setAreaSheetOpen(false);
+    if (AREA_COORDINATES[area] && mapInstanceRef.current) {
+      mapInstanceRef.current.flyTo(
+        [AREA_COORDINATES[area].lat, AREA_COORDINATES[area].lng],
+        14,
+        { duration: 1.2 }
+      );
+    }
+  };
+
+  const handleSelectUniversity = (uniName: string) => {
+    setToUniversity(uniName);
+    setUniSheetOpen(false);
+    const uniObj = UNIVERSITIES.find((u) => u.name === uniName || u.short === uniName);
+    if (uniObj && mapInstanceRef.current) {
+      mapInstanceRef.current.flyTo([uniObj.location.lat, uniObj.location.lng], 14, {
+        duration: 1.2,
+      });
+    }
+  };
+
+  // Main CTA Button Click ("سجّل خطك")
+  const handleMainActionClick = () => {
+    // If user is driver, open line registration directly
+    if (user?.role === "driver") {
+      setAddLineModalOpen(true);
+      return;
+    }
+
+    // If both fields chosen, or user is student: open quick action sheet
+    setActionSheetOpen(true);
+  };
+
+  const handleSearchMatchingLines = () => {
+    setActionSheetOpen(false);
     const params = new URLSearchParams();
-    if (selectedUni !== "all") params.set("university", selectedUni);
-    if (selectedArea !== "all") params.set("area", selectedArea);
-    if (selectedShift !== "all") params.set("shift", selectedShift);
-    if (selectedGender !== "all") params.set("gender", selectedGender);
+    if (fromArea) params.set("area", fromArea);
+    const matchedUni = UNIVERSITIES.find((u) => u.name === toUniversity || u.short === toUniversity);
+    if (matchedUni) params.set("university", matchedUni.id);
     navigate(`/services?${params.toString()}`);
   };
 
-  const handleQuickUniSelect = (uniId: string) => {
-    navigate(`/services?university=${uniId}`);
-  };
-
   return (
-    <div className="flex-1 pb-8">
-      {/* Hero Section */}
-      <section className="hero-grid relative overflow-hidden brand-surface pb-16 pt-8 text-white sm:pb-28 sm:pt-20">
-        <div className="container relative">
-          <div className="max-w-3xl space-y-4 animate-fade-up sm:space-y-5">
-            {/* Top Badge */}
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/10 px-3.5 py-1 text-[11px] font-bold text-gold sm:text-xs">
-              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-              منصة النقل الجامعي الأولى في البصرة
-            </span>
+    <div className="relative w-full h-[100dvh] overflow-hidden bg-[#eef3f2]">
+      {/* 1. Fullscreen Map */}
+      <div ref={mapContainerRef} className="absolute inset-0 w-full h-full z-0" />
 
-            {/* Main Title & Subtitle */}
-            <h1 className="font-display text-3xl font-black leading-tight sm:text-6xl">
-              خطوط المهندس
-            </h1>
-            <p className="text-base text-white/90 sm:text-2xl font-medium">
-              اعثر على خط النقل المثالي لجامعتك في البصرة
-            </p>
-            <p className="text-xs sm:text-base font-extrabold text-gold">
-              أكثر من {activeLines.length * 3} خطاً معتمداً يغطي أحياء ومناطق البصرة
-            </p>
+      {/* 2. Top Floating Controls (Pill & Notification Bell) */}
+      <header className="absolute top-4 inset-x-4 z-30 flex items-center justify-between pointer-events-none pt-[env(safe-area-inset-top)]">
+        {/* Right side in RTL: City Selector Pill (📍 البصرة ⌄) */}
+        <div className="relative pointer-events-auto">
+          <button
+            type="button"
+            onClick={() => setCityMenuOpen(!cityMenuOpen)}
+            className="flex items-center gap-1.5 rounded-full bg-white/95 px-4 py-2 text-sm font-black text-gray-800 shadow-[0_4px_16px_rgba(0,0,0,0.1)] border border-gray-150 backdrop-blur-md transition-all hover:bg-white active:scale-95"
+            aria-label="اختيار المدينة"
+          >
+            <ChevronDown className="h-4 w-4 text-gray-500 stroke-[2.5]" />
+            <span className="font-display font-extrabold">{selectedCity}</span>
+            <MapPin className="h-4 w-4 text-[#246158]" />
+          </button>
 
-            {/* Quick Action Buttons */}
-            <div className="flex flex-wrap items-center gap-2.5 pt-1 sm:pt-2">
-              <button
-                type="button"
-                onClick={() => setCoverageModalOpen(true)}
-                className="flex items-center gap-2 rounded-xl bg-gold px-4 py-2.5 sm:px-6 sm:py-3 text-xs sm:text-sm font-black text-navy-deep shadow-lg transition-all hover:bg-gold/90 active:scale-95"
-              >
-                <MapPinned className="h-4 w-4" />
-                اطلب خطاً لمنطقتك
-              </button>
-              <button
-                type="button"
-                onClick={() => setAddLineModalOpen(true)}
-                className="flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 sm:px-6 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-sm backdrop-blur-sm transition-all hover:bg-white/20 active:scale-95"
-              >
-                <UserPlus className="h-4 w-4" />
-                أضف خطك كـ سائق
-              </button>
+          {/* City Dropdown Menu */}
+          {cityMenuOpen && (
+            <div className="absolute top-12 right-0 w-44 rounded-2xl bg-white p-2 shadow-2xl border border-gray-150 z-50 animate-fade-up">
+              <p className="px-2 py-1 text-[11px] font-bold text-gray-400">المناطق المتاحة:</p>
+              {["البصرة", "الزبير", "شط العرب", "الهارثة", "القرنة", "أبو الخصيب"].map((city) => (
+                <button
+                  key={city}
+                  type="button"
+                  onClick={() => {
+                    setSelectedCity(city);
+                    setCityMenuOpen(false);
+                    if (city === "الزبير" && mapInstanceRef.current) {
+                      mapInstanceRef.current.flyTo([30.3897, 47.708], 13);
+                    } else if (mapInstanceRef.current) {
+                      mapInstanceRef.current.flyTo([MAP_DEFAULT_CENTER.lat, MAP_DEFAULT_CENTER.lng], 13);
+                    }
+                  }}
+                  className={cn(
+                    "flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors",
+                    selectedCity === city
+                      ? "bg-[#eaf4f2] text-[#246158]"
+                      : "text-gray-700 hover:bg-gray-50"
+                  )}
+                >
+                  <span>{city}</span>
+                  {selectedCity === city && <Check className="h-3.5 w-3.5" />}
+                </button>
+              ))}
             </div>
+          )}
+        </div>
+
+        {/* Left side in RTL: Circular Notification Bell with Badge (🔔 19) */}
+        <div className="relative pointer-events-auto">
+          <button
+            type="button"
+            onClick={() => setNotifModalOpen(true)}
+            className="relative flex h-11 w-11 items-center justify-center rounded-full bg-white/95 text-gray-800 shadow-[0_4px_16px_rgba(0,0,0,0.1)] border border-gray-150 backdrop-blur-md transition-all hover:bg-white active:scale-95"
+            aria-label="التنبيهات والإشعارات"
+          >
+            <Bell className="h-5 w-5 text-gray-700 stroke-[2]" />
+            <span className="absolute -top-1 -right-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#ef4444] px-1 text-[10px] font-black text-white shadow-sm border-2 border-white">
+              19
+            </span>
+          </button>
+        </div>
+      </header>
+
+      {/* Recenter Map Button (Floating bottom-right above card) */}
+      <button
+        type="button"
+        onClick={() => {
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.flyTo(
+              [MAP_DEFAULT_CENTER.lat, MAP_DEFAULT_CENTER.lng],
+              MAP_DEFAULT_ZOOM,
+              { duration: 1 }
+            );
+          }
+        }}
+        className="absolute bottom-64 right-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-gray-700 shadow-md border border-gray-150 active:scale-95 transition-all"
+        aria-label="إعادة ضبط الخريطة"
+      >
+        <Compass className="h-5 w-5 text-[#246158]" />
+      </button>
+
+      {/* 3. Bottom Floating Card ("وين خطك اليومي؟") */}
+      <div className="absolute bottom-[4.8rem] inset-x-3.5 sm:inset-x-6 z-30 max-w-md mx-auto pointer-events-auto">
+        <div className="rounded-3xl bg-white dark:bg-card p-5 shadow-[0_12px_45px_rgba(0,0,0,0.14)] border border-gray-100 dark:border-border transition-all">
+          {/* Card Title */}
+          <h2 className="text-xl sm:text-2xl font-black text-[#1e293b] dark:text-foreground text-start font-display mb-4">
+            وين خطك اليومي؟
+          </h2>
+
+          {/* Inputs Section */}
+          <div className="rounded-2xl border border-gray-150 dark:border-border bg-white dark:bg-card overflow-hidden divide-y divide-gray-100 dark:divide-border shadow-inner-sm">
+            {/* Row 1: Start Location (منين تطلع؟) */}
+            <button
+              type="button"
+              onClick={() => setAreaSheetOpen(true)}
+              className="w-full flex items-center justify-between p-3.5 text-start hover:bg-gray-50/60 dark:hover:bg-muted/40 transition-colors"
+            >
+              <span
+                className={cn(
+                  "text-sm font-bold flex-1 truncate",
+                  fromArea ? "text-foreground font-black" : "text-gray-400 dark:text-muted-foreground"
+                )}
+              >
+                {fromArea ? `منطقة: ${fromArea}` : "منين تطلع؟"}
+              </span>
+              {/* Teal Ring Icon on Right (RTL) */}
+              <span className="h-4 w-4 rounded-full border-[2.5px] border-[#246158] inline-block shrink-0 ml-1" />
+            </button>
+
+            {/* Row 2: Destination Location (وين تروح؟) */}
+            <button
+              type="button"
+              onClick={() => setUniSheetOpen(true)}
+              className="w-full flex items-center justify-between p-3.5 text-start hover:bg-gray-50/60 dark:hover:bg-muted/40 transition-colors"
+            >
+              <span
+                className={cn(
+                  "text-sm font-bold flex-1 truncate",
+                  toUniversity ? "text-foreground font-black" : "text-gray-400 dark:text-muted-foreground"
+                )}
+              >
+                {toUniversity ? `الجامعة: ${toUniversity}` : "وين تروح؟"}
+              </span>
+              {/* Terracotta Solid Square Icon on Right (RTL) */}
+              <span className="h-3.5 w-3.5 rounded-[3px] bg-[#9e4a2e] inline-block shrink-0 ml-1" />
+            </button>
           </div>
 
-          {/* Mobile-first Horizontal Universities Quick Swipe */}
-          <div className="mt-8">
-            <p className="mb-2 text-xs font-bold text-white/70 flex items-center gap-1.5">
-              <GraduationCap className="h-4 w-4 text-gold" />
-              تصفح سريع حسب جامعتك:
-            </p>
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
-              {UNIVERSITIES.map((u) => (
+          {/* Primary Action Button (سجّل خطك) */}
+          <button
+            type="button"
+            onClick={handleMainActionClick}
+            className="w-full mt-4 py-3.5 rounded-2xl bg-[#286058] hover:bg-[#204e47] active:scale-[0.98] text-white font-black text-base shadow-[0_4px_16px_rgba(40,96,88,0.3)] transition-all flex items-center justify-center gap-2"
+          >
+            سجّل خطك
+          </button>
+        </div>
+      </div>
+
+      {/* Area Picker Bottom Sheet */}
+      {areaSheetOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white dark:bg-card rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl max-h-[80vh] flex flex-col animate-fade-up border border-border">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <h3 className="font-black text-base text-foreground font-display flex items-center gap-2">
+                <span className="h-3.5 w-3.5 rounded-full border-2 border-[#246158]" />
+                اختر منطقة الانطلاق (منين تطلع؟)
+              </h3>
+              <button
+                type="button"
+                onClick={() => setAreaSheetOpen(false)}
+                className="p-1 rounded-full hover:bg-muted"
+              >
+                <X className="h-5 w-5 text-muted-foreground" />
+              </button>
+            </div>
+
+            <div className="overflow-y-auto py-3 space-y-1.5 flex-1 pr-1">
+              {AREAS.map((area) => (
                 <button
-                  key={u.id}
+                  key={area}
                   type="button"
-                  onClick={() => handleQuickUniSelect(u.id)}
-                  className="shrink-0 flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-xs font-bold text-white backdrop-blur-md transition-all hover:bg-gold hover:text-navy-deep active:scale-95"
+                  onClick={() => handleSelectArea(area)}
+                  className={cn(
+                    "w-full flex items-center justify-between p-3 rounded-2xl text-xs font-bold text-start transition-all",
+                    fromArea === area
+                      ? "bg-[#eaf4f2] text-[#246158] font-black"
+                      : "hover:bg-muted/60 text-foreground"
+                  )}
                 >
-                  <span>{u.name}</span>
+                  <span className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    {area}
+                  </span>
+                  {fromArea === area && <Check className="h-4 w-4 text-[#246158]" />}
                 </button>
               ))}
             </div>
           </div>
-
-          {/* Quick Search Card */}
-          <div className="mt-6 sm:mt-10 rounded-2xl sm:rounded-3xl border border-white/15 bg-card/95 p-4 sm:p-6 text-foreground shadow-2xl backdrop-blur-xl">
-            <h3 className="mb-3 font-display text-base sm:text-lg font-extrabold text-foreground">
-              ابحث عن خطك الجامعي
-            </h3>
-            <form onSubmit={handleHeroSearch} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-              {/* University */}
-              <div>
-                <label className="mb-1 block text-xs font-bold text-muted-foreground">الجامعة</label>
-                <select
-                  value={selectedUni}
-                  onChange={(e) => setSelectedUni(e.target.value)}
-                  className="h-10 sm:h-11 w-full rounded-xl border border-input bg-background px-3 text-xs font-bold text-foreground"
-                >
-                  {UNIVERSITIES.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Area */}
-              <div>
-                <label className="mb-1 block text-xs font-bold text-muted-foreground">منطقتك</label>
-                <select
-                  value={selectedArea}
-                  onChange={(e) => setSelectedArea(e.target.value)}
-                  className="h-10 sm:h-11 w-full rounded-xl border border-input bg-background px-3 text-xs font-bold text-foreground"
-                >
-                  <option value="all">كل المناطق</option>
-                  {AREAS.map((a) => (
-                    <option key={a} value={a}>
-                      {a}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Shift */}
-              <div>
-                <label className="mb-1 block text-xs font-bold text-muted-foreground">الدوام</label>
-                <select
-                  value={selectedShift}
-                  onChange={(e) => setSelectedShift(e.target.value)}
-                  className="h-10 sm:h-11 w-full rounded-xl border border-input bg-background px-3 text-xs font-bold text-foreground"
-                >
-                  <option value="all">كل الأوقات</option>
-                  <option value="morning">صباحي</option>
-                  <option value="evening">مسائي</option>
-                  <option value="full">صباحي ومسائي</option>
-                </select>
-              </div>
-
-              {/* Gender */}
-              <div>
-                <label className="mb-1 block text-xs font-bold text-muted-foreground">نوع الخط</label>
-                <select
-                  value={selectedGender}
-                  onChange={(e) => setSelectedGender(e.target.value)}
-                  className="h-10 sm:h-11 w-full rounded-xl border border-input bg-background px-3 text-xs font-bold text-foreground"
-                >
-                  <option value="all">الكل</option>
-                  <option value="girls">بنات فقط</option>
-                  <option value="mixed">مختلط</option>
-                </select>
-              </div>
-
-              {/* Submit Button */}
-              <div className="flex items-end">
-                <button
-                  type="submit"
-                  className="flex h-10 sm:h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-xs sm:text-sm font-extrabold text-primary-foreground shadow-md transition-all hover:bg-primary/90 active:scale-95"
-                >
-                  <Search className="h-4 w-4" />
-                  ابحث عن خط
-                </button>
-              </div>
-            </form>
-          </div>
         </div>
-      </section>
-
-      {/* Featured VIP Lines Section (Swipeable on Mobile) */}
-      {vipLines.length > 0 && (
-        <section className="container mt-10 sm:mt-16 space-y-4 sm:space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <Crown className="h-5 w-5 sm:h-6 sm:w-6 text-gold fill-gold" />
-                <h2 className="font-display text-xl sm:text-2xl font-black text-foreground">
-                  الخطوط المميزة - VIP
-                </h2>
-              </div>
-              <p className="mt-0.5 text-xs sm:text-sm text-muted-foreground">
-                خطوط معتمدة تظهر في الأعلى بعد مراجعة الإدارة
-              </p>
-            </div>
-            <Link
-              to="/services"
-              className="flex items-center gap-1 text-xs sm:text-sm font-bold text-primary hover:underline"
-            >
-              عرض الكل
-              <ArrowLeft className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-
-          {/* Swipeable on Mobile, Grid on Tablet/Desktop */}
-          <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:overflow-visible sm:pb-0">
-            {vipLines.map((line) => (
-              <div
-                key={line.id}
-                className="w-[84vw] max-w-sm shrink-0 snap-center sm:w-auto sm:max-w-none sm:shrink"
-              >
-                <LineCard
-                  line={line}
-                  variant="vip"
-                  onBook={(l) => setBookingLine(l)}
-                  className="h-full"
-                />
-              </div>
-            ))}
-          </div>
-        </section>
       )}
 
-      {/* All Approved Lines Section */}
-      <section className="container mt-10 sm:mt-16 space-y-4 sm:space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <LayoutList className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-              <h2 className="font-display text-xl sm:text-2xl font-black text-foreground">
-                كافة الخطوط المعتمدة
-              </h2>
-            </div>
-            <p className="mt-0.5 text-xs sm:text-sm text-muted-foreground">
-              {activeLines.length} خطاً منشوراً ومتاحاً للحجز المباشر
-            </p>
-          </div>
-          <Link
-            to="/services"
-            className="flex items-center gap-1 rounded-xl border border-border px-3 py-1.5 text-xs font-bold text-foreground transition-colors hover:bg-muted"
-          >
-            عرض الكل ({activeLines.length})
-            <ArrowLeft className="h-3.5 w-3.5" />
-          </Link>
-        </div>
-
-        <div className="grid gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {regularLinesPreview.map((line) => (
-            <LineCard
-              key={line.id}
-              line={line}
-              variant={line.isVip ? "vip" : "standard"}
-              onBook={(l) => setBookingLine(l)}
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* Value Propositions / Why Muhandis Transport */}
-      <section className="container mt-12 sm:mt-20">
-        <div className="rounded-2xl sm:rounded-3xl border border-border bg-card p-5 sm:p-8 shadow-sm">
-          <h2 className="text-center font-display text-xl sm:text-3xl font-black text-foreground">
-            لماذا يختار طلبة البصرة منصة «خطوط المهندس»؟
-          </h2>
-          <div className="mt-6 sm:mt-10 grid gap-4 sm:gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {/* Feature 1 */}
-            <div className="flex items-start sm:flex-col sm:items-center gap-3 sm:text-center p-3 rounded-xl bg-muted/20 sm:bg-transparent">
-              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">
-                <ShieldCheck className="h-6 w-6" />
-              </span>
-              <div>
-                <h3 className="font-display text-base sm:text-lg font-black text-foreground">خطوط موثوقة</h3>
-                <p className="mt-1 text-xs sm:text-sm leading-relaxed text-muted-foreground">
-                  كل خط يمر بمراجعة المشرف قبل النشر، مع بيانات واضحة ومعلنة عن السائق والمركبة.
-                </p>
-              </div>
+      {/* University Picker Bottom Sheet */}
+      {uniSheetOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white dark:bg-card rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl max-h-[80vh] flex flex-col animate-fade-up border border-border">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <h3 className="font-black text-base text-foreground font-display flex items-center gap-2">
+                <span className="h-3 w-3 rounded-[3px] bg-[#9e4a2e]" />
+                اختر جامعتك أو كليتك (وين تروح؟)
+              </h3>
+              <button
+                type="button"
+                onClick={() => setUniSheetOpen(false)}
+                className="p-1 rounded-full hover:bg-muted"
+              >
+                <X className="h-5 w-5 text-muted-foreground" />
+              </button>
             </div>
 
-            {/* Feature 2 */}
-            <div className="flex items-start sm:flex-col sm:items-center gap-3 sm:text-center p-3 rounded-xl bg-muted/20 sm:bg-transparent">
-              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gold/15 text-gold">
-                <Coins className="h-6 w-6" />
-              </span>
-              <div>
-                <h3 className="font-display text-base sm:text-lg font-black text-foreground">أسعار معلنة</h3>
-                <p className="mt-1 text-xs sm:text-sm leading-relaxed text-muted-foreground">
-                  السعر الشهري ومواعيد الذهاب والعودة ظاهرة قبل التواصل، بلا مفاوضات أو تكاليف خفية.
-                </p>
-              </div>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="flex items-start sm:flex-col sm:items-center gap-3 sm:text-center p-3 rounded-xl bg-muted/20 sm:bg-transparent">
-              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                <Send className="h-6 w-6" />
-              </span>
-              <div>
-                <h3 className="font-display text-base sm:text-lg font-black text-foreground">حجز بموقعك</h3>
-                <p className="mt-1 text-xs sm:text-sm leading-relaxed text-muted-foreground">
-                  حدد نقطة انطلاقك على الخريطة وأرسلها للسائق عبر واتساب بضغطة زر واحدة ومباشرة.
-                </p>
-              </div>
+            <div className="overflow-y-auto py-3 space-y-1.5 flex-1 pr-1">
+              {UNIVERSITIES.map((uni) => (
+                <button
+                  key={uni.id}
+                  type="button"
+                  onClick={() => handleSelectUniversity(uni.name)}
+                  className={cn(
+                    "w-full flex items-center justify-between p-3 rounded-2xl text-xs font-bold text-start transition-all",
+                    toUniversity === uni.name
+                      ? "bg-[#eaf4f2] text-[#246158] font-black"
+                      : "hover:bg-muted/60 text-foreground"
+                  )}
+                >
+                  <div>
+                    <p className="font-bold">{uni.name}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{uni.short}</p>
+                  </div>
+                  {toUniversity === uni.name && <Check className="h-4 w-4 text-[#246158]" />}
+                </button>
+              ))}
             </div>
           </div>
         </div>
-      </section>
+      )}
 
-      {/* Coverage Request CTA Banner */}
-      <section className="container my-10 sm:my-16">
-        <div className="flex flex-col items-center gap-4 rounded-2xl sm:rounded-3xl border border-dashed border-border bg-muted/40 p-5 sm:p-8 text-center sm:flex-row sm:text-start">
-          <span className="relative grid h-14 w-14 shrink-0 place-items-center rounded-full bg-gold/20 text-gold">
-            <span className="absolute inset-0 animate-pulse-ring rounded-full bg-gold/30" />
-            <MapPinned className="relative h-7 w-7" />
-          </span>
-          <div className="flex-1 space-y-1">
-            <h3 className="font-display text-base sm:text-xl font-black text-foreground">
-              لم تجد خطاً يغطي منطقتك حتى الآن؟
-            </h3>
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              حدد موقعك على الخريطة وأرسل طلبك وسنقوم بالتواصل مع السائقين لتوفير خط لك في أقرب وقت.
-            </p>
+      {/* Quick Action Sheet on "سجّل خطك" */}
+      {actionSheetOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white dark:bg-card rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl animate-fade-up border border-border space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-border">
+              <div>
+                <h3 className="font-black text-base text-foreground font-display">
+                  {fromArea && toUniversity
+                    ? `المسار: ${fromArea} ⟵ ${toUniversity}`
+                    : "اختيار الإجراء المطلوب"}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  اختر ما إذا كنت ترغب بالبحث عن مقعد أو تسجيل خطك كـ كابتن
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActionSheetOpen(false)}
+                className="p-1 rounded-full hover:bg-muted"
+              >
+                <X className="h-5 w-5 text-muted-foreground" />
+              </button>
+            </div>
+
+            <div className="space-y-2.5 pt-1">
+              {/* Option 1: Search available lines */}
+              <button
+                type="button"
+                onClick={handleSearchMatchingLines}
+                className="w-full flex items-center justify-between p-4 rounded-2xl bg-[#eaf4f2] dark:bg-[#246158]/20 text-[#246158] font-bold text-sm hover:bg-[#dcefe9] transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-white dark:bg-card flex items-center justify-center shadow-sm">
+                    <Search className="h-5 w-5 text-[#246158]" />
+                  </div>
+                  <div className="text-start">
+                    <p className="font-black">تصفح الخطوط المتوفرة</p>
+                    <p className="text-[11px] text-[#246158]/80 font-normal">
+                      عرض مقاعد الباصات والصالون المتوفرة لهذا المسار
+                    </p>
+                  </div>
+                </div>
+              </button>
+
+              {/* Option 2: Add Line as Captain */}
+              <button
+                type="button"
+                onClick={() => {
+                  setActionSheetOpen(false);
+                  setAddLineModalOpen(true);
+                }}
+                className="w-full flex items-center justify-between p-4 rounded-2xl bg-muted/60 hover:bg-muted text-foreground font-bold text-sm transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-card flex items-center justify-center shadow-sm border border-border">
+                    <UserPlus className="h-5 w-5 text-foreground" />
+                  </div>
+                  <div className="text-start">
+                    <p className="font-black">أضف خطك كـ كابتن جديد</p>
+                    <p className="text-[11px] text-muted-foreground font-normal">
+                      سجّل مركبتك ومقاعدك لتظهر للطلاب فوراً في المنصة
+                    </p>
+                  </div>
+                </div>
+              </button>
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setCoverageModalOpen(true)}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-xs sm:text-sm font-black text-primary-foreground shadow-md transition-all hover:bg-primary/90 active:scale-95"
-          >
-            <MapPinned className="h-4 w-4" />
-            حدد موقعك واطلب خطاً
-          </button>
         </div>
-      </section>
+      )}
 
-      {/* Modals */}
+      {/* Notifications Modal (Bell 🔔 19) */}
+      {notifModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white dark:bg-card rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl animate-fade-up border border-border max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center">
+                  <Bell className="h-4 w-4" />
+                </div>
+                <h3 className="font-black text-base text-foreground font-display">
+                  التنبيهات والإشعارات (19)
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setNotifModalOpen(false)}
+                className="p-1 rounded-full hover:bg-muted"
+              >
+                <X className="h-5 w-5 text-muted-foreground" />
+              </button>
+            </div>
+
+            <div className="overflow-y-auto py-3 space-y-2.5 flex-1 pr-1 text-xs">
+              {[
+                { title: "تم تأكيد تسجيل خط جديد", desc: "كابتن أبو مصطفى أضاف خط الزبير - كرمة علي", time: "منذ 10 دقائق" },
+                { title: "مقاعد شاغرة محدودة", desc: "تبقى مقعدين فقط في خط الجنينة - باب الزبير", time: "منذ 35 دقيقة" },
+                { title: "تنبيه مواعيد الدوام", desc: "الانطلاق الصباحي غداً يبدأ الساعة 07:15 ص", time: "منذ ساعتين" },
+                { title: "طلب تغطية جديد", desc: "تم تسجيل طلب تغطية جديد لحي المهندسين", time: "أمس" },
+              ].map((n, idx) => (
+                <div key={idx} className="p-3 rounded-2xl bg-muted/40 border border-border/60 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-foreground">{n.title}</span>
+                    <span className="text-[10px] text-muted-foreground">{n.time}</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">{n.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Global Modals */}
+      <AddLineModal open={addLineModalOpen} onOpenChange={setAddLineModalOpen} />
       <BookingModal
         line={bookingLine}
-        open={bookingLine !== null}
+        open={!!bookingLine}
         onOpenChange={(open) => !open && setBookingLine(null)}
       />
-
-      <RequestCoverageModal
-        open={coverageModalOpen}
-        onOpenChange={setCoverageModalOpen}
-      />
-
-      <AddLineModal
-        open={addLineModalOpen}
-        onOpenChange={setAddLineModalOpen}
-      />
+      <RequestCoverageModal open={coverageModalOpen} onOpenChange={setCoverageModalOpen} />
     </div>
   );
 };

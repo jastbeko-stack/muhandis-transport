@@ -2,151 +2,84 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   House,
-  LayoutList,
-  PlusCircle,
-  Bus,
-  MapPinned,
-  Users,
+  Map,
+  BusFront,
   MessageSquare,
-  CircleUser,
+  User,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { cn } from "../../utils/formatters";
 
-interface BottomNavProps {
-  onOpenAddLine?: () => void;
-  onOpenCoverage?: () => void;
-}
-
-export const BottomNav: React.FC<BottomNavProps> = ({
-  onOpenAddLine,
-  onOpenCoverage,
-}) => {
+export const BottomNav: React.FC = () => {
   const location = useLocation();
   const { user } = useAuth();
 
   const isActive = (path: string) => {
-    return path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
+    if (path === "/") {
+      return location.pathname === "/" || location.pathname === "/home";
+    }
+    return location.pathname.startsWith(path);
   };
 
-  const isDriver = user?.role === "driver";
+  const navItems = [
+    {
+      to: "/",
+      label: "الرئيسية",
+      icon: House,
+      active: isActive("/"),
+    },
+    {
+      to: "/services",
+      label: "الخطوط",
+      icon: Map,
+      active: isActive("/services"),
+    },
+    {
+      to: "/trips",
+      label: "رحلاتي",
+      icon: BusFront,
+      active: isActive("/trips"),
+    },
+    {
+      to: "/messages",
+      label: "الرسائل",
+      icon: MessageSquare,
+      active: isActive("/messages"),
+    },
+    {
+      to: user?.role === "driver" ? "/driver" : "/student",
+      label: "حسابي",
+      icon: User,
+      active: isActive("/student") || isActive("/driver") || isActive("/profile"),
+    },
+  ];
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-card/95 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1.5 shadow-[0_-4px_25px_rgba(0,0,0,0.08)] backdrop-blur-xl lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-50 bg-white/95 dark:bg-card/95 backdrop-blur-md border-t border-gray-200/80 dark:border-border pb-[max(0.4rem,env(safe-area-inset-bottom))] pt-1 shadow-[0_-4px_25px_rgba(0,0,0,0.06)]"
       aria-label="شريط التنقل السفلي"
     >
-      <div className="container flex items-center justify-around px-1">
-        {/* Tab 1: Home or Driver Portal */}
-        <Link
-          to={isDriver ? "/driver" : "/"}
-          className={cn(
-            "flex flex-col items-center gap-1 py-1 px-2 text-[11px] font-bold transition-all active:scale-90",
-            isActive(isDriver ? "/driver" : "/")
-              ? "text-primary dark:text-gold"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          <div className="relative">
-            {isDriver ? <Bus className="h-5 w-5" /> : <House className="h-5 w-5" />}
-            {isActive(isDriver ? "/driver" : "/") && (
-              <span className="absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary dark:bg-gold" />
-            )}
-          </div>
-          <span>{isDriver ? "لوحتي" : "الرئيسية"}</span>
-        </Link>
+      <div className="container max-w-lg mx-auto flex items-center justify-around px-2">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const active = item.active;
 
-        {/* Tab 2: Lines Directory */}
-        <Link
-          to="/services"
-          className={cn(
-            "flex flex-col items-center gap-1 py-1 px-2 text-[11px] font-bold transition-all active:scale-90",
-            isActive("/services")
-              ? "text-primary dark:text-gold"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          <div className="relative">
-            <LayoutList className="h-5 w-5" />
-            {isActive("/services") && (
-              <span className="absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary dark:bg-gold" />
-            )}
-          </div>
-          <span>الخطوط</span>
-        </Link>
-
-        {/* Tab 3: Center Action (Add Line for driver, or Request Coverage for student) */}
-        {isDriver ? (
-          <button
-            type="button"
-            onClick={onOpenAddLine}
-            className="group -mt-5 flex flex-col items-center gap-0.5 active:scale-95"
-            aria-label="أضف خطك كـ سائق"
-          >
-            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-gold text-navy-deep shadow-lg ring-4 ring-background transition-transform group-hover:scale-105">
-              <PlusCircle className="h-6 w-6 stroke-[2.5]" />
-            </span>
-            <span className="text-[10px] font-black text-foreground">أضف خطك</span>
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={onOpenCoverage}
-            className="group -mt-5 flex flex-col items-center gap-0.5 active:scale-95"
-            aria-label="طلب خط لمنطقتك"
-          >
-            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-lg ring-4 ring-background transition-transform group-hover:scale-105">
-              <MapPinned className="h-6 w-6" />
-            </span>
-            <span className="text-[10px] font-black text-foreground">طلب خط</span>
-          </button>
-        )}
-
-        {/* Tab 4: In-App Messages for Student & Driver */}
-        <Link
-          to="/messages"
-          className={cn(
-            "flex flex-col items-center gap-1 py-1 px-2 text-[11px] font-bold transition-all active:scale-90",
-            isActive("/messages")
-              ? "text-primary dark:text-gold"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          <div className="relative">
-            <MessageSquare className="h-5 w-5" />
-            <span className="absolute -top-1 -end-1 flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-gold" />
-            </span>
-            {isActive("/messages") && (
-              <span className="absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary dark:bg-gold" />
-            )}
-          </div>
-          <span>الرسائل</span>
-        </Link>
-
-        {/* Tab 5: Account (حسابي) / Driver Passengers */}
-        <Link
-          to={isDriver ? "/driver" : "/student"}
-          className={cn(
-            "flex flex-col items-center gap-1 py-1 px-2 text-[11px] font-bold transition-all active:scale-90",
-            isActive(isDriver ? "/driver" : "/student")
-              ? "text-primary dark:text-gold"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          <div className="relative">
-            {isDriver ? (
-              <Users className="h-5 w-5" />
-            ) : (
-              <CircleUser className="h-5 w-5" />
-            )}
-            {isActive(isDriver ? "/driver" : "/student") && (
-              <span className="absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary dark:bg-gold" />
-            )}
-          </div>
-          <span>{isDriver ? "الركاب" : "حسابي"}</span>
-        </Link>
+          return (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={cn(
+                "flex flex-col items-center justify-center transition-all select-none active:scale-95 py-1 px-3",
+                active
+                  ? "bg-[#eaf4f2] text-[#246158] dark:bg-[#246158]/25 dark:text-[#52b7a9] rounded-2xl font-black shadow-sm"
+                  : "text-gray-500 hover:text-gray-800 dark:text-muted-foreground dark:hover:text-foreground font-bold"
+              )}
+            >
+              <Icon className={cn("h-5 w-5 mb-0.5", active ? "stroke-[2.2]" : "stroke-[1.75]")} />
+              <span className="text-[11px] leading-tight">{item.label}</span>
+            </Link>
+          );
+        })}
       </div>
     </nav>
   );
