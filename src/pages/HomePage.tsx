@@ -18,10 +18,11 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { usePlatform } from "../context/PlatformContext";
 import { UNIVERSITIES, AREAS, AREA_COORDINATES } from "../data/initialData";
-import type { TransportLine } from "../types";
 import { AddLineModal } from "../components/modals/AddLineModal";
 import { BookingModal } from "../components/modals/BookingModal";
 import { RequestCoverageModal } from "../components/modals/RequestCoverageModal";
+import { RegisterTripSheet } from "../components/modals/RegisterTripSheet";
+import type { TransportLine } from "../types";
 import { toast } from "sonner";
 import { cn } from "../utils/formatters";
 
@@ -54,6 +55,7 @@ export const HomePage: React.FC = () => {
   const [bookingLine, setBookingLine] = useState<TransportLine | null>(null);
   const [coverageModalOpen, setCoverageModalOpen] = useState(false);
   const [actionSheetOpen, setActionSheetOpen] = useState(false);
+  const [registerTripSheetOpen, setRegisterTripSheetOpen] = useState(false);
 
   // Selected City Pill
   const [selectedCity, setSelectedCity] = useState("البصرة");
@@ -270,7 +272,7 @@ export const HomePage: React.FC = () => {
       setAddLineModalOpen(true);
       return;
     }
-    setActionSheetOpen(true);
+    setRegisterTripSheetOpen(true);
   };
 
   const handleSearchMatchingLines = () => {
@@ -403,16 +405,24 @@ export const HomePage: React.FC = () => {
       <div className="absolute bottom-[calc(3.85rem+env(safe-area-inset-bottom,0px))] sm:bottom-20 inset-x-3 sm:inset-x-6 z-30 max-w-md mx-auto pointer-events-auto">
         <div className="rounded-2xl sm:rounded-3xl bg-white dark:bg-card p-3.5 sm:p-5 shadow-[0_10px_35px_rgba(0,0,0,0.14)] border border-gray-150/90 dark:border-border transition-all">
           {/* Card Title */}
-          <h2 className="text-base sm:text-2xl font-black text-[#1e293b] dark:text-foreground text-start font-display mb-2.5 sm:mb-4">
-            وين خطك اليومي؟
-          </h2>
+          <div
+            onClick={() => setRegisterTripSheetOpen(true)}
+            className="flex items-center justify-between cursor-pointer group mb-2.5 sm:mb-4"
+          >
+            <h2 className="text-base sm:text-2xl font-black text-[#1e293b] dark:text-foreground text-start font-display group-hover:text-[#246158] transition-colors">
+              وين خطك اليومي؟
+            </h2>
+            <span className="text-[11px] sm:text-xs font-black text-[#286058] bg-[#eaf4f2] px-2.5 py-0.5 rounded-full border border-[#286058]/20">
+              سجّل الآن
+            </span>
+          </div>
 
           {/* Inputs Section */}
           <div className="rounded-xl sm:rounded-2xl border border-gray-150 dark:border-border bg-white dark:bg-card overflow-hidden divide-y divide-gray-100 dark:divide-border shadow-inner-sm">
             {/* Row 1: Start Location (منين تطلع؟) */}
             <button
               type="button"
-              onClick={() => setAreaSheetOpen(true)}
+              onClick={() => setRegisterTripSheetOpen(true)}
               className="w-full flex items-center justify-between p-2.5 sm:p-3.5 text-start hover:bg-gray-50/60 dark:hover:bg-muted/40 transition-colors"
             >
               <span
@@ -430,7 +440,7 @@ export const HomePage: React.FC = () => {
             {/* Row 2: Destination Location (وين تروح؟) */}
             <button
               type="button"
-              onClick={() => setUniSheetOpen(true)}
+              onClick={() => setRegisterTripSheetOpen(true)}
               className="w-full flex items-center justify-between p-2.5 sm:p-3.5 text-start hover:bg-gray-50/60 dark:hover:bg-muted/40 transition-colors"
             >
               <span
@@ -663,6 +673,14 @@ export const HomePage: React.FC = () => {
         onOpenChange={(open) => !open && setBookingLine(null)}
       />
       <RequestCoverageModal open={coverageModalOpen} onOpenChange={setCoverageModalOpen} />
+
+      {/* Register Trip Sheet matching the user screenshot design */}
+      <RegisterTripSheet
+        open={registerTripSheetOpen}
+        onClose={() => setRegisterTripSheetOpen(false)}
+        initialFromArea={fromArea}
+        initialToUniversity={toUniversity}
+      />
     </div>
   );
 };
