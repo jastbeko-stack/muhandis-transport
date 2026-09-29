@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
-import type { TransportLine, CoverageRequest, NewLineSubmission, StudentLineRequest } from "../types";
-import { INITIAL_LINES, INITIAL_STUDENT_REQUESTS, ADMIN_CODE } from "../data/initialData";
+import type { TransportLine, CoverageRequest, NewLineSubmission, StudentLineRequest, DriverRecord } from "../types";
+import { INITIAL_LINES, INITIAL_STUDENT_REQUESTS, INITIAL_REGISTERED_DRIVERS, ADMIN_CODE } from "../data/initialData";
 import { supabaseService, isSupabaseConfigured } from "../lib/supabase";
 
 interface PlatformContextType {
@@ -10,6 +10,7 @@ interface PlatformContextType {
   pendingLines: TransportLine[];
   coverageRequests: CoverageRequest[];
   studentRequests: StudentLineRequest[];
+  registeredDrivers: DriverRecord[];
   isAdmin: boolean;
   signIn: (code: string) => boolean;
   signOut: () => void;
@@ -22,12 +23,16 @@ interface PlatformContextType {
   submitCoverageRequest: (data: Omit<CoverageRequest, "id" | "createdAt">) => CoverageRequest;
   submitStudentRequest: (data: Omit<StudentLineRequest, "id" | "createdAt" | "status">) => StudentLineRequest;
   updateStudentRequestStatus: (id: string, status: "open" | "contacted" | "accepted") => void;
+  addDriverRecord: (driver: Omit<DriverRecord, "id" | "registeredAt">) => DriverRecord;
+  updateDriverStatus: (id: string, status: "verified" | "pending" | "rejected") => void;
+  removeDriverRecord: (id: string) => void;
   resetDemoData: () => void;
 }
 
 const LINES_KEY = "khutoot.lines.v1";
 const REQUESTS_KEY = "khutoot.requests.v1";
 const STUDENT_REQUESTS_KEY = "khutoot.student_requests.v1";
+const DRIVERS_KEY = "khutoot.drivers.v1";
 const ADMIN_KEY = "khutoot.admin.v1";
 
 function loadStorage<T>(key: string, fallback: T): T {
@@ -59,6 +64,9 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
   const [studentRequests, setStudentRequests] = useState<StudentLineRequest[]>(() =>
     loadStorage(STUDENT_REQUESTS_KEY, INITIAL_STUDENT_REQUESTS)
   );
+  const [registeredDrivers, setRegisteredDrivers] = useState<DriverRecord[]>(() =>
+    loadStorage(DRIVERS_KEY, INITIAL_REGISTERED_DRIVERS)
+  );
   const [isAdmin, setIsAdmin] = useState<boolean>(() => loadStorage(ADMIN_KEY, false));
 
   useEffect(() => {
@@ -72,6 +80,10 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     saveStorage(STUDENT_REQUESTS_KEY, studentRequests);
   }, [studentRequests]);
+
+  useEffect(() => {
+    saveStorage(DRIVERS_KEY, registeredDrivers);
+  }, [registeredDrivers]);
 
   useEffect(() => {
     saveStorage(ADMIN_KEY, isAdmin);
@@ -253,10 +265,37 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
+  const addDriverRecord = useCallback(
+    (driver: Omit<DriverRecord, "id" | "registeredAt">): DriverRecord => {
+      const newRecord: DriverRecord = {
+        ...driver,
+        id: `drv-${Date.now()}`,
+        registeredAt: new Date().toISOString(),
+      };
+      setRegisteredDrivers((prev) => [newRecord, ...prev]);
+      return newRecord;
+    },
+    []
+  );
+
+  const updateDriverStatus = useCallback(
+    (id: string, status: "verified" | "pending" | "rejected") => {
+      setRegisteredDrivers((prev) =>
+        prev.map((d) => (d.id === id ? { ...d, status } : d))
+      );
+    },
+    []
+  );
+
+  const removeDriverRecord = useCallback((id: string) => {
+    setRegisteredDrivers((prev) => prev.filter((d) => d.id !== id));
+  }, []);
+
   const resetDemoData = useCallback(() => {
     setLines(INITIAL_LINES);
     setCoverageRequests([]);
     setStudentRequests(INITIAL_STUDENT_REQUESTS);
+    setRegisteredDrivers(INITIAL_REGISTERED_DRIVERS);
   }, []);
 
   const activeLines = useMemo(() => lines.filter((line) => line.status === "active"), [lines]);
@@ -271,6 +310,7 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
       pendingLines,
       coverageRequests,
       studentRequests,
+      registeredDrivers,
       isAdmin,
       signIn,
       signOut,
@@ -283,6 +323,9 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
       submitCoverageRequest,
       submitStudentRequest,
       updateStudentRequestStatus,
+      addDriverRecord,
+      updateDriverStatus,
+      removeDriverRecord,
       resetDemoData,
     }),
     [
@@ -292,6 +335,7 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
       pendingLines,
       coverageRequests,
       studentRequests,
+      registeredDrivers,
       isAdmin,
       signIn,
       signOut,
@@ -304,6 +348,9 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
       submitCoverageRequest,
       submitStudentRequest,
       updateStudentRequestStatus,
+      addDriverRecord,
+      updateDriverStatus,
+      removeDriverRecord,
       resetDemoData,
     ]
   );

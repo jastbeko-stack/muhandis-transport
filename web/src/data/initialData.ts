@@ -1,4 +1,4 @@
-import type { TransportLine, University, Coordinates, FilterState, StudentLineRequest } from "../types";
+import type { TransportLine, University, Coordinates, FilterState, StudentLineRequest, DriverRecord } from "../types";
 
 export const ADMIN_CODE = "ht8k";
 export const DEFAULT_WHATSAPP = "9647801234567";
@@ -902,5 +902,72 @@ export const INITIAL_STUDENT_REQUESTS: StudentLineRequest[] = [
     status: "open",
     notes: "3 طالبات نبحث عن باص أو صالون خط بنات فقط من الحيانية",
     createdAt: "اليوم",
+  },
+];
+
+export const INITIAL_REGISTERED_DRIVERS: DriverRecord[] = [
+  {
+    id: "drv-rec-1",
+    name: "أبو مصطفى الحلفي",
+    phone: "07701234567",
+    area: "الزبير - محلة العرب",
+    photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80",
+    carName: "كيا سيراتو (صالون)",
+    carModel: "2023",
+    carColor: "أبيض لؤلؤي",
+    vehicleKind: "sedan",
+    totalSeats: 4,
+    licenseNumber: "بصرة 14820 خصوصي",
+    status: "verified",
+    registeredAt: "2026-09-20T10:00:00.000Z",
+    notes: "سائق ملتزم حاصل على تقييم 5 نجوم وسجل جنائي وفحص سلامة نظيف",
+  },
+  {
+    id: "drv-rec-2",
+    name: "كابتن كرار التميمي",
+    phone: "07802345678",
+    area: "القبلة - حي المهندسين",
+    photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80",
+    carName: "هيونداي H1 ستاركس (فان)",
+    carModel: "2022",
+    carColor: "رصاصي ميتاليك",
+    vehicleKind: "van",
+    totalSeats: 12,
+    licenseNumber: "بصرة 77312 أجرة",
+    status: "verified",
+    registeredAt: "2026-09-22T14:30:00.000Z",
+    notes: "تكييف مركزي ممتاز، نقل لجامعة باب الزبير ومجمع كرمة علي",
+  },
+  {
+    id: "drv-rec-3",
+    name: "أبو سجاد الجابري",
+    phone: "07713456789",
+    area: "المعقل - الأبلة",
+    photoUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&auto=format&fit=crop&q=80",
+    carName: "تويوتا هايس (فان مكيف)",
+    carModel: "2024",
+    carColor: "أبيض ناصع",
+    vehicleKind: "van",
+    totalSeats: 14,
+    licenseNumber: "بصرة 99241 خصوصي",
+    status: "verified",
+    registeredAt: "2026-09-25T08:15:00.000Z",
+    notes: "مركبة حديثة جداً مجهزة بأحزمة أمان وتبريد فائق",
+  },
+  {
+    id: "drv-rec-4",
+    name: "كابتن حيدر الساعدي",
+    phone: "07809876543",
+    area: "الطويسة - شارع التأميم",
+    photoUrl: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&auto=format&fit=crop&q=80",
+    carName: "هيونداي إلنترا (صالون)",
+    carModel: "2021",
+    carColor: "أسود ملكي",
+    vehicleKind: "sedan",
+    totalSeats: 4,
+    licenseNumber: "بصرة 35118 خصوصي",
+    status: "pending",
+    registeredAt: "2026-09-28T16:00:00.000Z",
+    notes: "طلب تسجيل جديد بانتظار إكمال تدقيق الوثائق من الإدارة",
   },
 ];

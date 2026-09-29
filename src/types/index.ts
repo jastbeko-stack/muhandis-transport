@@ -22,6 +22,23 @@ export type ShiftType = "morning" | "evening" | "full";
 export type LineStatus = "active" | "pending" | "rejected";
 export type UserRole = "student" | "driver";
 
+export interface DriverRecord {
+  id: string;
+  name: string;
+  phone: string;
+  area: string;
+  photoUrl?: string; // صورته الشخصية
+  carName: string; // اسم سيارته
+  carModel: string; // موديل سيارته
+  carColor: string; // لون السيارة
+  vehicleKind: "sedan" | "van" | "bus";
+  totalSeats: number;
+  licenseNumber?: string;
+  status: "verified" | "pending" | "rejected";
+  registeredAt: string;
+  notes?: string;
+}
+
 export interface AuthUser {
   id: string;
   name: string;
@@ -30,6 +47,10 @@ export interface AuthUser {
   role: UserRole;
   universityId?: string; // For students
   area?: string; // For students & drivers
+  photoUrl?: string; // الصورة الشخصية
+  carName?: string; // اسم سيارته
+  carModel?: string; // موديل السيارة
+  carColor?: string; // لون السيارة
   vehicleModel?: string; // For drivers
   vehicleKind?: "sedan" | "van" | "bus"; // For drivers
   totalSeats?: number; // For drivers

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   Lock,
@@ -12,11 +12,18 @@ import {
   ExternalLink,
   MessageSquare,
   MapPin,
+  Car,
+  Phone,
+  ShieldCheck,
+  Eye,
+  X,
+  Search,
 } from "lucide-react";
 import { usePlatform } from "../context/PlatformContext";
 import { UNIVERSITIES, ADMIN_CODE } from "../data/initialData";
 import { formatPrice, formatSeats, formatRelativeDate, createGoogleMapsUrl, cn } from "../utils/formatters";
 import { DriverAvatar } from "../components/common/DriverAvatar";
+import type { DriverRecord } from "../types";
 import { toast } from "sonner";
 
 export const DashboardPage: React.FC = () => {
@@ -28,15 +35,34 @@ export const DashboardPage: React.FC = () => {
     pendingLines,
     vipLines,
     coverageRequests,
+    registeredDrivers,
     approveLine,
     rejectLine,
     toggleVip,
     removeLine,
+    updateDriverStatus,
+    removeDriverRecord,
     resetDemoData,
   } = usePlatform();
 
   const [passcode, setPasscode] = useState("");
-  const [activeTab, setActiveTab] = useState<"pending" | "active" | "requests">("pending");
+  const [activeTab, setActiveTab] = useState<"pending" | "active" | "requests" | "drivers">("drivers");
+  const [selectedDriver, setSelectedDriver] = useState<DriverRecord | null>(null);
+  const [driverSearch, setDriverSearch] = useState("");
+
+  const filteredDrivers = useMemo(() => {
+    return registeredDrivers.filter((d) => {
+      if (!driverSearch.trim()) return true;
+      const q = driverSearch.toLowerCase().trim();
+      return (
+        d.name.toLowerCase().includes(q) ||
+        d.phone.includes(q) ||
+        d.carName.toLowerCase().includes(q) ||
+        d.carColor.toLowerCase().includes(q) ||
+        d.area.toLowerCase().includes(q)
+      );
+    });
+  }, [registeredDrivers, driverSearch]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,7 +156,14 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="admin-card p-5">
+            <p className="text-xs font-bold text-white/60">سجلات السائقين</p>
+            <p className="mt-2 font-display text-3xl font-black text-purple-400">
+              {registeredDrivers.length}
+            </p>
+          </div>
+
           <div className="admin-card p-5">
             <p className="text-xs font-bold text-white/60">طلبات تنتظر الموافقة</p>
             <p className="mt-2 font-display text-3xl font-black text-amber-400">
@@ -161,12 +194,29 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Tabs Bar */}
-        <div className="flex border-b border-white/10">
+        <div className="flex border-b border-white/10 overflow-x-auto no-scrollbar">
+          <button
+            type="button"
+            onClick={() => setActiveTab("drivers")}
+            className={cn(
+              "flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold transition-all whitespace-nowrap",
+              activeTab === "drivers"
+                ? "border-gold text-gold"
+                : "border-transparent text-white/60 hover:text-white"
+            )}
+          >
+            <ShieldCheck className="h-4 w-4" />
+            <span>سجلات السائقين والسيارات</span>
+            <span className="rounded-full bg-gold/20 text-gold px-2 py-0.5 text-xs font-black">
+              {registeredDrivers.length}
+            </span>
+          </button>
+
           <button
             type="button"
             onClick={() => setActiveTab("pending")}
             className={cn(
-              "flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold transition-all",
+              "flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold transition-all whitespace-nowrap",
               activeTab === "pending"
                 ? "border-gold text-gold"
                 : "border-transparent text-white/60 hover:text-white"
@@ -182,7 +232,7 @@ export const DashboardPage: React.FC = () => {
             type="button"
             onClick={() => setActiveTab("active")}
             className={cn(
-              "flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold transition-all",
+              "flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold transition-all whitespace-nowrap",
               activeTab === "active"
                 ? "border-gold text-gold"
                 : "border-transparent text-white/60 hover:text-white"
@@ -198,7 +248,7 @@ export const DashboardPage: React.FC = () => {
             type="button"
             onClick={() => setActiveTab("requests")}
             className={cn(
-              "flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold transition-all",
+              "flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold transition-all whitespace-nowrap",
               activeTab === "requests"
                 ? "border-gold text-gold"
                 : "border-transparent text-white/60 hover:text-white"
@@ -436,6 +486,276 @@ export const DashboardPage: React.FC = () => {
                 لم تصل طلبات تغطية بعد. تصل هنا طلبات الطلبة الذين لا تغطيهم الخطوط الحالية.
               </div>
             )}
+          </div>
+        )}
+
+        {/* Tab 4: Drivers Directory (خاص بالإدارة فقط) */}
+        {activeTab === "drivers" && (
+          <div className="space-y-4">
+            {/* Subheader and search */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/5 p-4 rounded-2xl border border-white/10">
+              <div>
+                <h3 className="font-display text-lg font-black text-white flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 text-gold" />
+                  سجلات السائقين والسيارات المعتمدة (خاص بالإدارة)
+                </h3>
+                <p className="text-xs text-white/60 mt-0.5">
+                  صفحة سرية خاصة بالإدارة لعرض معلومات السائقين، صورهم الشخصية، ومواصفات وألوان سياراتهم
+                </p>
+              </div>
+              <div className="relative min-w-[220px]">
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/50" />
+                <input
+                  type="text"
+                  value={driverSearch}
+                  onChange={(e) => setDriverSearch(e.target.value)}
+                  placeholder="بحث بالسائق، الهاتف، أو السيارة..."
+                  className="w-full bg-white/10 border border-white/15 rounded-xl pr-9 pl-3 py-2 text-xs text-white placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-gold"
+                />
+              </div>
+            </div>
+
+            {/* Drivers Grid */}
+            {filteredDrivers.length > 0 ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                {filteredDrivers.map((driver) => (
+                  <div
+                    key={driver.id}
+                    className="admin-card p-5 space-y-4 border border-white/10 hover:border-gold/40 transition-all"
+                  >
+                    {/* Header: Photo + Name + Phone + Status */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        {driver.photoUrl ? (
+                          <img
+                            src={driver.photoUrl}
+                            alt={driver.name}
+                            className="h-16 w-16 rounded-2xl object-cover border-2 border-gold shadow-md shrink-0 cursor-pointer hover:opacity-90 transition-opacity"
+                            onClick={() => setSelectedDriver(driver)}
+                          />
+                        ) : (
+                          <div
+                            onClick={() => setSelectedDriver(driver)}
+                            className="h-16 w-16 rounded-2xl bg-gold/20 text-gold flex items-center justify-center font-bold text-2xl border border-gold/40 shrink-0 cursor-pointer"
+                          >
+                            👨‍✈️
+                          </div>
+                        )}
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-display text-base font-black text-white">{driver.name}</h4>
+                            {driver.status === "verified" ? (
+                              <span className="text-[10px] font-black text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                                معتمد وموثق
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-black text-amber-400 bg-amber-500/15 px-2 py-0.5 rounded-full border border-amber-500/30">
+                                قيد التدقيق
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-white/60 font-mono mt-0.5" dir="ltr">
+                            {driver.phone}
+                          </p>
+                          <p className="text-xs text-white/70 mt-1 flex items-center gap-1">
+                            <MapPin className="h-3 w-3 text-gold" />
+                            منطقة: <strong className="text-white">{driver.area}</strong>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Vehicle Details Box: Car Name, Model, Color, Seats */}
+                    <div className="grid grid-cols-2 gap-2 bg-white/5 p-3 rounded-2xl border border-white/10 text-xs">
+                      <div>
+                        <span className="text-[10px] text-white/50 block">اسم السيارة والماركة:</span>
+                        <span className="font-bold text-white flex items-center gap-1 mt-0.5 truncate">
+                          <Car className="h-3.5 w-3.5 text-gold shrink-0" />
+                          {driver.carName}
+                        </span>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] text-white/50 block">الموديل (سنة الصنع):</span>
+                        <span className="font-bold text-white font-mono mt-0.5 block">
+                          {driver.carModel}
+                        </span>
+                      </div>
+
+                      <div className="col-span-2 pt-2 border-t border-white/10 flex items-center justify-between">
+                        <div>
+                          <span className="text-[10px] text-white/50 block">لون السيارة:</span>
+                          <span className="font-bold text-white flex items-center gap-1.5 mt-0.5">
+                            <span className="h-3 w-3 rounded-full border border-white/40 shadow-sm inline-block bg-white/20" />
+                            {driver.carColor}
+                          </span>
+                        </div>
+
+                        <div className="text-end">
+                          <span className="text-[10px] text-white/50 block">سعة المركبة:</span>
+                          <span className="font-bold text-emerald-400 mt-0.5 block">
+                            {driver.totalSeats} مقاعد ({driver.vehicleKind === "sedan" ? "صالون" : driver.vehicleKind === "van" ? "فان" : "باص"})
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Notes */}
+                    {driver.notes && (
+                      <p className="text-[11px] text-white/60 bg-white/5 p-2 rounded-xl border border-white/5">
+                        {driver.notes}
+                      </p>
+                    )}
+
+                    {/* Admin Action Buttons */}
+                    <div className="flex items-center gap-2 pt-2 border-t border-white/10">
+                      {driver.status !== "verified" ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            updateDriverStatus(driver.id, "verified");
+                            toast.success(`تم اعتماد وتوثيق الكابتن (${driver.name}) بنجاح`);
+                          }}
+                          className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1 transition-all active:scale-95 shadow-sm"
+                        >
+                          <CheckCircle className="h-3.5 w-3.5" />
+                          توثيق واعتماد السائق
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedDriver(driver)}
+                          className="flex-1 py-2 rounded-xl bg-gold text-navy-deep font-black text-xs flex items-center justify-center gap-1 transition-all active:scale-95 shadow-sm hover:bg-gold/90"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          عرض البطاقة الرسمية
+                        </button>
+                      )}
+
+                      <a
+                        href={`tel:${driver.phone}`}
+                        className="py-2 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center justify-center gap-1"
+                        title="اتصال بالسائق"
+                      >
+                        <Phone className="h-3.5 w-3.5 text-gold" />
+                      </a>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (confirm(`هل أنت متأكد من حذف سجل السائق ${driver.name}؟`)) {
+                            removeDriverRecord(driver.id);
+                            toast.success("تم حذف سجل السائق");
+                          }
+                        }}
+                        className="py-2 px-3 rounded-xl bg-destructive/20 hover:bg-destructive/30 text-red-300 text-xs font-bold"
+                        title="حذف السجل"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="admin-card p-12 text-center text-white/60">
+                لا يوجد سائقين مطابقين للبحث.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Selected Driver Modal */}
+        {selectedDriver && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+            <div className="w-full max-w-md bg-[#0f172a] rounded-3xl p-6 border-2 border-gold/40 shadow-2xl text-white space-y-4 animate-fade-up">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 text-gold" />
+                  <h3 className="font-display text-base font-black">بطاقة السائق المعتمد (ملف الإدارة)</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedDriver(null)}
+                  className="p-1 rounded-full hover:bg-white/10 text-white/70 hover:text-white"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Driver Card Body */}
+              <div className="text-center space-y-3">
+                {selectedDriver.photoUrl ? (
+                  <img
+                    src={selectedDriver.photoUrl}
+                    alt={selectedDriver.name}
+                    className="h-24 w-24 rounded-3xl object-cover mx-auto border-3 border-gold shadow-lg"
+                  />
+                ) : (
+                  <div className="h-24 w-24 rounded-3xl bg-gold/20 text-gold flex items-center justify-center font-bold text-4xl mx-auto border-2 border-gold">
+                    👨‍✈️
+                  </div>
+                )}
+                <div>
+                  <h4 className="font-display text-lg font-black text-white">{selectedDriver.name}</h4>
+                  <p className="text-xs text-gold font-mono mt-0.5" dir="ltr">{selectedDriver.phone}</p>
+                </div>
+              </div>
+
+              {/* Details Table */}
+              <div className="space-y-2 rounded-2xl bg-white/5 p-4 border border-white/10 text-xs">
+                <div className="flex justify-between py-1 border-b border-white/5">
+                  <span className="text-white/60">اسم وماركة السيارة:</span>
+                  <span className="font-bold text-white">{selectedDriver.carName}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-white/5">
+                  <span className="text-white/60">الموديل (سنة الصنع):</span>
+                  <span className="font-bold text-white font-mono">{selectedDriver.carModel}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-white/5">
+                  <span className="text-white/60">لون السيارة:</span>
+                  <span className="font-bold text-white">{selectedDriver.carColor}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-white/5">
+                  <span className="text-white/60">سعة المقاعد:</span>
+                  <span className="font-bold text-emerald-400">{selectedDriver.totalSeats} مقاعد</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-white/5">
+                  <span className="text-white/60">منطقة العمل بالبصرة:</span>
+                  <span className="font-bold text-white">{selectedDriver.area}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-white/5">
+                  <span className="text-white/60">حالة التوثيق:</span>
+                  <span className="font-bold text-emerald-400">
+                    {selectedDriver.status === "verified" ? "موثق ومعتمد رسمي" : "قيد التدقيق"}
+                  </span>
+                </div>
+                {selectedDriver.licenseNumber && (
+                  <div className="flex justify-between py-1">
+                    <span className="text-white/60">رقم اللوحة:</span>
+                    <span className="font-mono font-bold text-white">{selectedDriver.licenseNumber}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <a
+                  href={`tel:${selectedDriver.phone}`}
+                  className="flex-1 py-2.5 rounded-xl bg-gold text-navy-deep font-black text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                >
+                  <Phone className="h-4 w-4" />
+                  اتصال بالسائق
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setSelectedDriver(null)}
+                  className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs"
+                >
+                  إغلاق
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

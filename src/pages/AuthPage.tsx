@@ -9,6 +9,10 @@ import {
   User,
   ArrowLeft,
   CheckCircle2,
+  Camera,
+  Car,
+  Palette,
+  ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { usePlatform } from "../context/PlatformContext";
@@ -24,7 +28,7 @@ interface AuthPageProps {
 export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
   const navigate = useNavigate();
   const { loginWithPhone, loginWithEmail, register, quickDemoLogin } = useAuth();
-  const { submitLine } = usePlatform();
+  const { submitLine, addDriverRecord } = usePlatform();
 
   // Selected Role: student vs driver
   const [role, setRole] = useState<UserRole>("student");
@@ -42,9 +46,31 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
   const [password, setPassword] = useState("");
   const [universityId, setUniversityId] = useState(UNIVERSITIES[0].id);
   const [area, setArea] = useState(AREAS[0]);
-  const [vehicleModel, setVehicleModel] = useState("صالون كيا سيراتو");
+
+  // Driver Specific Registration Fields
+  const [carName, setCarName] = useState("كيا سيراتو");
+  const [carModel, setCarModel] = useState("2023");
+  const [carColor, setCarColor] = useState("أبيض لؤلؤي");
+  const [photoUrl, setPhotoUrl] = useState<string>("");
+  const [licenseNumber, setLicenseNumber] = useState("");
   const [vehicleKind, setVehicleKind] = useState<"sedan" | "van" | "bus">("sedan");
   const [loading, setLoading] = useState(false);
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("حجم الصورة كبير جداً، يرجى اختيار صورة أصغر من 5 ميغابايت");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setPhotoUrl(event.target?.result as string);
+        toast.success("تم اختيار صورتك الشخصية بنجاح");
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,6 +86,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
 
         const cleanPhone = phone.trim() || "07701234567";
         const totalSeats = vehicleKind === "sedan" ? 4 : vehicleKind === "van" ? 14 : 24;
+        const combinedVehicleModel = `${carName.trim()} (${carModel.trim()}) - ${carColor.trim()}`;
 
         await register({
           name: name.trim(),
@@ -68,12 +95,32 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
           role,
           universityId: role === "student" ? universityId : undefined,
           area,
-          vehicleModel: role === "driver" ? vehicleModel : undefined,
+          photoUrl: photoUrl || undefined,
+          carName: role === "driver" ? carName.trim() : undefined,
+          carModel: role === "driver" ? carModel.trim() : undefined,
+          carColor: role === "driver" ? carColor.trim() : undefined,
+          vehicleModel: role === "driver" ? combinedVehicleModel : undefined,
           vehicleKind: role === "driver" ? vehicleKind : undefined,
           totalSeats: role === "driver" ? totalSeats : undefined,
         });
 
         if (role === "driver") {
+          // Register driver in the Admin directory visible only to management
+          addDriverRecord({
+            name: name.trim(),
+            phone: cleanPhone,
+            area,
+            photoUrl: photoUrl || undefined,
+            carName: carName.trim(),
+            carModel: carModel.trim(),
+            carColor: carColor.trim(),
+            vehicleKind,
+            totalSeats,
+            licenseNumber: licenseNumber.trim() || undefined,
+            status: "pending",
+            notes: `سائق جديد مسجل عبر المنصة - منطقة ${area}`,
+          });
+
           const selectedUni = UNIVERSITIES.find((u) => u.id === universityId);
           submitLine({
             driverName: name.trim(),
@@ -83,7 +130,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
             toArea: selectedUni ? selectedUni.short : area,
             vehicle: {
               kind: vehicleKind,
-              model: vehicleModel.trim() || "صالون كيا سيراتو",
+              model: combinedVehicleModel,
               seats: totalSeats,
             },
             seatsAvailable: Math.max(1, totalSeats - 1),
@@ -97,7 +144,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
             vipRequested: false,
             startPoint: AREA_COORDINATES[area] || BASRA_CENTER,
           });
-          toast.success(`أهلاً بك كابتن ${name}! تم حفظ بياناتك ونشر خطك بنجاح في الموقع.`);
+          toast.success(`أهلاً بك كابتن ${name}! تم حفظ بياناتك وصورتك ومعلومات مركبتك لإدارة المنصة.`);
         } else {
           toast.success(`أهلاً بك يا ${name}! تم إنشاء حسابك كطالب بنجاح.`);
         }
@@ -389,7 +436,125 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
             )}
 
             {isRegister && role === "driver" && (
-              <div className="space-y-3">
+              <div className="space-y-3.5 pt-1 border-t border-border">
+                {/* 1. Driver Personal Photo */}
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-foreground flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <Camera className="h-3.5 w-3.5 text-gold" />
+                      الصورة الشخصية للكابتن *
+                    </span>
+                    <span className="text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full border border-amber-300">
+                      خاصة بالإدارة فقط
+                    </span>
+                  </label>
+
+                  <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-muted/30 border border-dashed border-border hover:border-gold/60 transition-all">
+                    {photoUrl ? (
+                      <img
+                        src={photoUrl}
+                        alt="معاينة الصورة"
+                        className="h-14 w-14 rounded-2xl object-cover border-2 border-gold shadow-sm shrink-0"
+                      />
+                    ) : (
+                      <div className="h-14 w-14 rounded-2xl bg-gold/15 text-gold flex items-center justify-center font-bold text-xl shrink-0 border border-gold/30">
+                        👨‍✈️
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <input
+                        type="file"
+                        id="driver-photo-upload"
+                        accept="image/*"
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                      />
+                      <label
+                        htmlFor="driver-photo-upload"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-background border border-border text-xs font-bold text-foreground hover:bg-muted cursor-pointer transition-all shadow-sm"
+                      >
+                        <Camera className="h-3.5 w-3.5 text-gold" />
+                        {photoUrl ? "تغيير الصورة الشخصية" : "رفع صورتك الشخصية"}
+                      </label>
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        صورة واضحة للوجه تُستخدم فقط لتدقيق الهوية لدى الإدارة
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Car Name & Model */}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-xs font-bold text-foreground flex items-center gap-1">
+                      <Car className="h-3.5 w-3.5 text-gold" />
+                      اسم السيارة والماركة *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="مثال: كيا سيراتو / هيونداي ستاركس"
+                      value={carName}
+                      onChange={(e) => setCarName(e.target.value)}
+                      className="h-11 w-full rounded-xl border border-input bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-xs font-bold text-foreground">
+                      الموديل (سنة الصنع) *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="مثال: 2023"
+                      value={carModel}
+                      onChange={(e) => setCarModel(e.target.value)}
+                      className="h-11 w-full rounded-xl border border-input bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                </div>
+
+                {/* 3. Car Color */}
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-foreground flex items-center justify-between">
+                    <span className="flex items-center gap-1">
+                      <Palette className="h-3.5 w-3.5 text-gold" />
+                      لون السيارة *
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">اختر أو اكتب اللون</span>
+                  </label>
+                  <div className="space-y-1.5">
+                    <input
+                      type="text"
+                      required
+                      placeholder="مثال: أبيض لؤلؤي / رصاصي / أسود"
+                      value={carColor}
+                      onChange={(e) => setCarColor(e.target.value)}
+                      className="h-11 w-full rounded-xl border border-input bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                    {/* Quick color buttons */}
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-[11px]">
+                      {["أبيض", "رصاصي", "أسود", "فضي", "أصفر", "أزرق"].map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setCarColor(c)}
+                          className={cn(
+                            "px-2.5 py-1 rounded-lg border text-xs font-bold transition-all whitespace-nowrap",
+                            carColor.includes(c)
+                              ? "bg-gold text-navy-deep border-gold font-black"
+                              : "bg-muted/40 border-border text-foreground hover:bg-muted"
+                          )}
+                        >
+                          {c}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Vehicle Kind & Area */}
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
                     <label className="mb-1 block text-xs font-bold text-muted-foreground">صنف المركبة</label>
@@ -403,16 +568,41 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
                       <option value="bus">باص كوستر (24 راكب)</option>
                     </select>
                   </div>
+
                   <div>
-                    <label className="mb-1 block text-xs font-bold text-muted-foreground">نوع وموديل المركبة</label>
-                    <input
-                      type="text"
-                      placeholder="مثال: كيا سيراتو"
-                      value={vehicleModel}
-                      onChange={(e) => setVehicleModel(e.target.value)}
-                      className="h-11 w-full rounded-xl border border-input bg-background px-3 text-xs text-foreground"
-                    />
+                    <label className="mb-1 block text-xs font-bold text-muted-foreground">منطقة انطلاق خطك</label>
+                    <select
+                      value={area}
+                      onChange={(e) => setArea(e.target.value)}
+                      className="h-11 w-full rounded-xl border border-input bg-background px-3 text-xs font-bold text-foreground"
+                    >
+                      {AREAS.map((a) => (
+                        <option key={a} value={a}>
+                          {a}
+                        </option>
+                      ))}
+                    </select>
                   </div>
+                </div>
+
+                {/* 5. Plate / License number */}
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-muted-foreground">
+                    رقم لوحة المركبة (اختياري للإدارة)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="مثال: بصرة 12345 خصوصي / أجرة"
+                    value={licenseNumber}
+                    onChange={(e) => setLicenseNumber(e.target.value)}
+                    className="h-11 w-full rounded-xl border border-input bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+
+                {/* Privacy Badge */}
+                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-amber-500/10 border border-amber-300/40 text-[11px] text-amber-700 dark:text-amber-400 font-medium">
+                  <ShieldCheck className="h-4 w-4 shrink-0 text-amber-600" />
+                  <span>معلومات مركبتك وصورتك الشخصية مشفرة وتظهر حصرياً للجنة إدارة المنصة للتحقق والاعتماد.</span>
                 </div>
               </div>
             )}
