@@ -15,6 +15,7 @@ import { AuthPage } from "./pages/AuthPage";
 import { DriverPortalPage } from "./pages/DriverPortalPage";
 import { StudentPortalPage } from "./pages/StudentPortalPage";
 import { MessagesPage } from "./pages/MessagesPage";
+import { LineRequestsPage } from "./pages/LineRequestsPage";
 import { AddLineModal } from "./components/modals/AddLineModal";
 import { RequestCoverageModal } from "./components/modals/RequestCoverageModal";
 import { cn } from "./utils/formatters";
@@ -58,6 +59,7 @@ function AppContent() {
           <Route path="/" element={<HomePage />} />
           <Route path="/home" element={<HomePage />} />
           <Route path="/services" element={<ServicesPage />} />
+          <Route path="/requests" element={<LineRequestsPage />} />
           <Route path="/trips" element={<TripsPage />} />
           <Route path="/driver" element={<DriverPortalPage />} />
           <Route path="/student" element={<StudentPortalPage />} />

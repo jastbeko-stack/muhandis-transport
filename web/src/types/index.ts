@@ -74,6 +74,25 @@ export interface CoverageRequest {
   createdAt: string;
 }
 
+export interface StudentLineRequest {
+  id: string;
+  studentName: string;
+  phone: string;
+  universityName: string;
+  college?: string;
+  area: string;
+  destinationArea?: string;
+  passengersCount: number; // كم شخص
+  preferredPrice: number; // السعر المناسب للطالب شهرياً
+  gender: GenderType; // شباب / بنات / مختلط
+  shift: ShiftType; // صباحي / مسائي
+  departureTime?: string;
+  returnTime?: string;
+  status: "open" | "contacted" | "accepted";
+  notes?: string;
+  createdAt: string;
+}
+
 export interface FilterState {
   universityId: string;
   areas: string[];

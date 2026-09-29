@@ -7,8 +7,8 @@ import {
   MessageSquare,
   Gauge,
   Users,
-  LayoutList,
   GraduationCap,
+  ClipboardList,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { cn } from "../../utils/formatters";
@@ -20,6 +20,9 @@ export const BottomNav: React.FC = () => {
   const isActive = (path: string) => {
     if (path === "/") {
       return location.pathname === "/" || location.pathname === "/home";
+    }
+    if (path === "/requests") {
+      return location.pathname.startsWith("/requests") || (user?.role === "driver" && location.pathname.startsWith("/services"));
     }
     return location.pathname.startsWith(path);
   };
@@ -40,8 +43,14 @@ export const BottomNav: React.FC = () => {
             active: isActive("/"),
           },
           {
+            to: "/requests",
+            label: "طلبات الخطوط",
+            icon: ClipboardList,
+            active: isActive("/requests"),
+          },
+          {
             to: "/trips",
-            label: "طلبات الركاب",
+            label: "ركاب خطي",
             icon: Users,
             active: isActive("/trips"),
           },
@@ -50,12 +59,6 @@ export const BottomNav: React.FC = () => {
             label: "الرسائل",
             icon: MessageSquare,
             active: isActive("/messages"),
-          },
-          {
-            to: "/services",
-            label: "الخطوط",
-            icon: LayoutList,
-            active: isActive("/services"),
           },
         ]
       : [

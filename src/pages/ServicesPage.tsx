@@ -9,6 +9,8 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { usePlatform } from "../context/PlatformContext";
+import { useAuth } from "../context/AuthContext";
+import { LineRequestsPage } from "./LineRequestsPage";
 import type { FilterState, TransportLine } from "../types";
 import { UNIVERSITIES, AREAS, INITIAL_FILTERS } from "../data/initialData";
 import { FilterSidebar } from "../components/lines/FilterSidebar";
@@ -25,6 +27,13 @@ const SORT_LABELS: Record<FilterState["sort"], string> = {
 };
 
 export const ServicesPage: React.FC = () => {
+  const { user } = useAuth();
+
+  // If driver, show Line Requests directly
+  if (user?.role === "driver") {
+    return <LineRequestsPage />;
+  }
+
   const [searchParams] = useSearchParams();
   const { activeLines } = usePlatform();
 

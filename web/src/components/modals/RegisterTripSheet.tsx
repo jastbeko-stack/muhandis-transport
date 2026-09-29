@@ -9,6 +9,7 @@ import {
 import { UNIVERSITIES, AREAS } from "../../data/initialData";
 import { supabaseService, isSupabaseConfigured } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
+import { usePlatform } from "../../context/PlatformContext";
 import { toast } from "sonner";
 import { cn } from "../../utils/formatters";
 
@@ -27,6 +28,7 @@ export const RegisterTripSheet: React.FC<RegisterTripSheetProps> = ({
 }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { submitStudentRequest } = usePlatform();
 
   // Form Fields matching screenshot 1 & 2
   const [fromArea, setFromArea] = useState(initialFromArea);
@@ -77,6 +79,21 @@ export const RegisterTripSheet: React.FC<RegisterTripSheetProps> = ({
     setSubmitting(true);
 
     try {
+      // Save student line request to Platform context for drivers to view
+      submitStudentRequest({
+        studentName: user?.name || "طالب مسجل",
+        phone: user?.phone || "07800000000",
+        universityName: toArea,
+        area: fromArea,
+        passengersCount: personCount,
+        preferredPrice: 35000,
+        gender: genderType,
+        shift: shift,
+        departureTime: arrivalTime || "07:30 ص",
+        returnTime: returnTime || "02:00 م",
+        notes: `حجز لـ ${getPersonLabel(personCount)} - ${forWhom === "me" ? "للطالب نفسه" : forWhom === "daughter" ? "لابنتي" : "لابني"}`,
+      });
+
       // Save student trip request to Supabase
       if (isSupabaseConfigured) {
         await supabaseService.submitCoverageRequest({
@@ -88,7 +105,7 @@ export const RegisterTripSheet: React.FC<RegisterTripSheetProps> = ({
         });
       }
 
-      toast.success("تم تسجيل خطك بنجاح! جاري عرض السواق المناسبين لمسارك...");
+      toast.success("تم تسجيل طلب خطك بنجاح! تم نشره للسائقين وجاري عرض الخطوط المناسبة لمسارك...");
       onClose();
 
       // Navigate to matching drivers

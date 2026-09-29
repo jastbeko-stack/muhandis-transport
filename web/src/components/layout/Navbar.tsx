@@ -12,6 +12,7 @@ import {
   Bus,
   LogOut,
   MessageSquare,
+  ClipboardList,
 } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
@@ -27,7 +28,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAddLine }) => {
   const { user, logout, switchRole } = useAuth();
 
   const isActive = (path: string) => {
-    return path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
+    if (path === "/") {
+      return location.pathname === "/";
+    }
+    if (path === "/requests") {
+      return location.pathname.startsWith("/requests") || (user?.role === "driver" && location.pathname.startsWith("/services"));
+    }
+    return location.pathname.startsWith(path);
   };
 
   const navItems =
@@ -35,9 +42,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAddLine }) => {
       ? [
           { to: "/driver", label: "لوحة السائق", icon: Gauge },
           { to: "/", label: "الخريطة المباشرة", icon: House },
-          { to: "/trips", label: "طلبات الركاب", icon: BusFront },
+          { to: "/requests", label: "طلبات الخطوط", icon: ClipboardList },
+          { to: "/trips", label: "ركاب خطي", icon: BusFront },
           { to: "/messages", label: "الرسائل", icon: MessageSquare },
-          { to: "/services", label: "دليل الخطوط", icon: LayoutList },
         ]
       : [
           { to: "/", label: "الرئيسية", icon: House },

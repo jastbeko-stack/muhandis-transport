@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
-import type { TransportLine, CoverageRequest, NewLineSubmission } from "../types";
-import { INITIAL_LINES, ADMIN_CODE } from "../data/initialData";
+import type { TransportLine, CoverageRequest, NewLineSubmission, StudentLineRequest } from "../types";
+import { INITIAL_LINES, INITIAL_STUDENT_REQUESTS, ADMIN_CODE } from "../data/initialData";
 import { supabaseService, isSupabaseConfigured } from "../lib/supabase";
 
 interface PlatformContextType {
@@ -9,6 +9,7 @@ interface PlatformContextType {
   vipLines: TransportLine[];
   pendingLines: TransportLine[];
   coverageRequests: CoverageRequest[];
+  studentRequests: StudentLineRequest[];
   isAdmin: boolean;
   signIn: (code: string) => boolean;
   signOut: () => void;
@@ -19,11 +20,14 @@ interface PlatformContextType {
   removeLine: (id: string) => void;
   updateLineSeats: (id: string, seats: number) => void;
   submitCoverageRequest: (data: Omit<CoverageRequest, "id" | "createdAt">) => CoverageRequest;
+  submitStudentRequest: (data: Omit<StudentLineRequest, "id" | "createdAt" | "status">) => StudentLineRequest;
+  updateStudentRequestStatus: (id: string, status: "open" | "contacted" | "accepted") => void;
   resetDemoData: () => void;
 }
 
 const LINES_KEY = "khutoot.lines.v1";
 const REQUESTS_KEY = "khutoot.requests.v1";
+const STUDENT_REQUESTS_KEY = "khutoot.student_requests.v1";
 const ADMIN_KEY = "khutoot.admin.v1";
 
 function loadStorage<T>(key: string, fallback: T): T {
@@ -52,6 +56,9 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
   const [coverageRequests, setCoverageRequests] = useState<CoverageRequest[]>(() =>
     loadStorage(REQUESTS_KEY, [])
   );
+  const [studentRequests, setStudentRequests] = useState<StudentLineRequest[]>(() =>
+    loadStorage(STUDENT_REQUESTS_KEY, INITIAL_STUDENT_REQUESTS)
+  );
   const [isAdmin, setIsAdmin] = useState<boolean>(() => loadStorage(ADMIN_KEY, false));
 
   useEffect(() => {
@@ -61,6 +68,10 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     saveStorage(REQUESTS_KEY, coverageRequests);
   }, [coverageRequests]);
+
+  useEffect(() => {
+    saveStorage(STUDENT_REQUESTS_KEY, studentRequests);
+  }, [studentRequests]);
 
   useEffect(() => {
     saveStorage(ADMIN_KEY, isAdmin);
@@ -219,9 +230,33 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
+  const submitStudentRequest = useCallback(
+    (data: Omit<StudentLineRequest, "id" | "createdAt" | "status">): StudentLineRequest => {
+      const newReq: StudentLineRequest = {
+        ...data,
+        id: `req-stu-${Date.now()}`,
+        status: "open",
+        createdAt: "الآن",
+      };
+      setStudentRequests((prev) => [newReq, ...prev]);
+      return newReq;
+    },
+    []
+  );
+
+  const updateStudentRequestStatus = useCallback(
+    (id: string, status: "open" | "contacted" | "accepted") => {
+      setStudentRequests((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, status } : r))
+      );
+    },
+    []
+  );
+
   const resetDemoData = useCallback(() => {
     setLines(INITIAL_LINES);
     setCoverageRequests([]);
+    setStudentRequests(INITIAL_STUDENT_REQUESTS);
   }, []);
 
   const activeLines = useMemo(() => lines.filter((line) => line.status === "active"), [lines]);
@@ -235,6 +270,7 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
       vipLines,
       pendingLines,
       coverageRequests,
+      studentRequests,
       isAdmin,
       signIn,
       signOut,
@@ -245,6 +281,8 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
       removeLine,
       updateLineSeats,
       submitCoverageRequest,
+      submitStudentRequest,
+      updateStudentRequestStatus,
       resetDemoData,
     }),
     [
@@ -253,6 +291,7 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
       vipLines,
       pendingLines,
       coverageRequests,
+      studentRequests,
       isAdmin,
       signIn,
       signOut,
@@ -263,6 +302,8 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
       removeLine,
       updateLineSeats,
       submitCoverageRequest,
+      submitStudentRequest,
+      updateStudentRequestStatus,
       resetDemoData,
     ]
   );
