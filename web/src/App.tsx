@@ -40,7 +40,7 @@ function AppContent() {
   return (
     <div
       className={cn(
-        "flex min-h-screen flex-col bg-background text-foreground",
+        "flex min-h-screen flex-col bg-background text-foreground w-full max-w-full overflow-x-hidden",
         isHomePage
           ? "h-screen overflow-hidden"
           : "pb-[calc(4.8rem+env(safe-area-inset-bottom,0px))] lg:pb-0"
@@ -49,11 +49,11 @@ function AppContent() {
       <Toaster position="top-center" dir="rtl" richColors closeButton />
 
       {/* Hide navbar on mobile when on home page so the map is full-screen matching screenshot */}
-      <div className={cn(isHomePage && "hidden lg:block")}>
+      <div className={cn(isHomePage && "hidden lg:block", "w-full max-w-full")}>
         <Navbar onOpenAddLine={() => setAddLineModalOpen(true)} />
       </div>
 
-      <div className={cn("flex flex-1 flex-col", isHomePage && "h-full overflow-hidden")}>
+      <div className={cn("flex flex-1 flex-col w-full min-w-0 max-w-full", isHomePage && "h-full overflow-hidden")}>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/home" element={<HomePage />} />

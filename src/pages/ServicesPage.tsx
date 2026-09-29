@@ -138,8 +138,8 @@ export const ServicesPage: React.FC = () => {
   const selectedUniObj = UNIVERSITIES.find((u) => u.id === filters.universityId);
 
   return (
-    <div className="flex-1">
-      <main className="w-full max-w-7xl mx-auto px-3 sm:px-6 pt-3 sm:pt-6 pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))] space-y-4 sm:space-y-6">
+    <div className="flex-1 w-full max-w-full min-w-0 overflow-x-hidden">
+      <main className="w-full max-w-7xl mx-auto px-3 sm:px-6 pt-3 sm:pt-6 pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))] space-y-4 sm:space-y-6 min-w-0 max-w-full overflow-hidden">
         {/* Header Title */}
         <div className="space-y-1">
           <h1 className="font-display text-xl sm:text-3xl font-black text-foreground">
@@ -151,7 +151,7 @@ export const ServicesPage: React.FC = () => {
         </div>
 
         {/* Content Layout */}
-        <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+        <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)] w-full min-w-0 max-w-full">
           {/* Desktop Sidebar */}
           <aside className="hidden lg:block">
             <div className="sticky top-24 card-surface max-h-[calc(100vh-8rem)] overflow-y-auto p-5">
@@ -160,7 +160,7 @@ export const ServicesPage: React.FC = () => {
           </aside>
 
           {/* Results Area */}
-          <div className="space-y-4 sm:space-y-5">
+          <div className="space-y-4 sm:space-y-5 w-full min-w-0 max-w-full overflow-hidden">
             {/* Top Toolbar: Search, Sort, Mobile filter button */}
             <div className="card-surface p-3 sm:p-4 space-y-2.5 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-3">
               {/* Search query input */}
@@ -224,13 +224,13 @@ export const ServicesPage: React.FC = () => {
             </div>
 
             {/* Mobile Quick University & Gender Filter Scrollbar */}
-            <div className="space-y-2 lg:hidden">
-              <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            <div className="space-y-2 lg:hidden w-full min-w-0 max-w-full overflow-hidden">
+              <div className="flex gap-1.5 overflow-x-auto pb-1.5 scrollbar-none w-full max-w-full touch-pan-x">
                 <button
                   type="button"
                   onClick={() => setFilters((prev) => ({ ...prev, universityId: "all" }))}
                   className={cn(
-                    "shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all active:scale-95",
+                    "shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all active:scale-95 whitespace-nowrap",
                     filters.universityId === "all"
                       ? "bg-primary text-primary-foreground shadow-sm"
                       : "border border-border bg-card text-muted-foreground"
@@ -244,7 +244,7 @@ export const ServicesPage: React.FC = () => {
                     type="button"
                     onClick={() => setFilters((prev) => ({ ...prev, universityId: u.id }))}
                     className={cn(
-                      "shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all active:scale-95",
+                      "shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all active:scale-95 whitespace-nowrap",
                       filters.universityId === u.id
                         ? "bg-primary text-primary-foreground shadow-sm"
                         : "border border-border bg-card text-muted-foreground"
@@ -256,7 +256,7 @@ export const ServicesPage: React.FC = () => {
               </div>
 
               {/* Quick Gender Chips */}
-              <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+              <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none w-full max-w-full touch-pan-x">
                 {[
                   { id: "all", label: "الكل" },
                   { id: "youth", label: "شباب 👨‍🎓" },
@@ -268,7 +268,7 @@ export const ServicesPage: React.FC = () => {
                     type="button"
                     onClick={() => setFilters((prev) => ({ ...prev, gender: item.id as FilterState["gender"] }))}
                     className={cn(
-                      "shrink-0 rounded-full px-3 py-1 text-[11px] font-bold transition-all active:scale-95",
+                      "shrink-0 rounded-full px-3 py-1 text-[11px] font-bold transition-all active:scale-95 whitespace-nowrap",
                       filters.gender === item.id
                         ? "bg-gold text-navy-deep font-black shadow-sm"
                         : "border border-border bg-muted/40 text-muted-foreground"
@@ -282,7 +282,7 @@ export const ServicesPage: React.FC = () => {
 
             {/* Active Filter Chips */}
             {activeFiltersCount > 0 && (
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 w-full min-w-0 max-w-full">
                 <span className="text-xs font-bold text-muted-foreground">الفلاتر المطبقة:</span>
 
                 {filters.universityId !== "all" && (
@@ -357,7 +357,7 @@ export const ServicesPage: React.FC = () => {
 
             {/* Results Grid */}
             {filteredLines.length > 0 ? (
-              <div className="grid gap-3.5 sm:gap-5 grid-cols-1 md:grid-cols-2 2xl:grid-cols-3">
+              <div className="grid gap-3.5 sm:gap-5 grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 w-full min-w-0 max-w-full">
                 {filteredLines.map((line) => (
                   <LineCard
                     key={line.id}
