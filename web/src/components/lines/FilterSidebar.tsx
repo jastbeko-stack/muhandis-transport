@@ -77,7 +77,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
       {/* University Filter */}
       <div className="space-y-2.5">
         <label className="block text-xs font-bold text-muted-foreground">الجامعة</label>
-        <div className="space-y-1">
+        <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
           <button
             type="button"
             onClick={() => handleUniversityChange("all")}
@@ -202,7 +202,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
             </button>
           )}
         </div>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pr-1">
           {AREAS.map((area) => {
             const selected = filters.areas.includes(area);
             return (

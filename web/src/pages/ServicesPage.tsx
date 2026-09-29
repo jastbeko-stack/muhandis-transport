@@ -139,19 +139,19 @@ export const ServicesPage: React.FC = () => {
 
   return (
     <div className="flex-1">
-      <main className="container py-8 space-y-8">
+      <main className="w-full max-w-7xl mx-auto px-3 sm:px-6 pt-3 sm:pt-6 pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))] space-y-4 sm:space-y-6">
         {/* Header Title */}
-        <div>
-          <h1 className="font-display text-3xl font-black text-foreground">
+        <div className="space-y-1">
+          <h1 className="font-display text-xl sm:text-3xl font-black text-foreground">
             الخطوط المعتمدة
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             تصفح جميع خطوط النقل الجامعي المنشورة في البصرة وفلترها حسب جامعتك ومنطقتك وميزانيتك.
           </p>
         </div>
 
         {/* Content Layout */}
-        <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
+        <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
           {/* Desktop Sidebar */}
           <aside className="hidden lg:block">
             <div className="sticky top-24 card-surface max-h-[calc(100vh-8rem)] overflow-y-auto p-5">
@@ -160,63 +160,66 @@ export const ServicesPage: React.FC = () => {
           </aside>
 
           {/* Results Area */}
-          <div className="space-y-5">
+          <div className="space-y-4 sm:space-y-5">
             {/* Top Toolbar: Search, Sort, Mobile filter button */}
-            <div className="card-surface flex flex-wrap items-center justify-between gap-3 p-4">
-              <div className="flex items-center gap-2 font-display text-sm font-extrabold text-foreground">
-                <ListFilter className="h-4 w-4 text-primary" aria-hidden="true" />
-                <span>{filteredLines.length} خطاً مطابقاً</span>
+            <div className="card-surface p-3 sm:p-4 space-y-2.5 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-3">
+              {/* Search query input */}
+              <div className="relative w-full sm:max-w-xs">
+                <Search className="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={filters.query}
+                  onChange={(e) =>
+                    setFilters((prev) => ({ ...prev, query: e.target.value }))
+                  }
+                  placeholder="ابحث باسم السائق أو المنطقة أو الجامعة..."
+                  className="h-10 sm:h-11 w-full rounded-xl border border-input bg-background pe-9 ps-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-xs"
+                />
               </div>
 
-              <div className="flex flex-1 flex-wrap items-center justify-end gap-2.5">
-                {/* Search query input */}
-                <div className="relative flex-1 sm:max-w-xs">
-                  <Search className="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <input
-                    type="text"
-                    value={filters.query}
-                    onChange={(e) =>
-                      setFilters((prev) => ({ ...prev, query: e.target.value }))
-                    }
-                    placeholder="ابحث باسم السائق أو المنطقة"
-                    className="h-11 w-full rounded-xl border border-input bg-background pe-9 ps-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
+              {/* Controls: Count, Sort selector, Mobile filter trigger */}
+              <div className="flex items-center justify-between sm:justify-end gap-2">
+                <div className="flex items-center gap-1.5 font-display text-xs sm:text-sm font-extrabold text-foreground shrink-0">
+                  <ListFilter className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
+                  <span>{filteredLines.length} خطاً</span>
                 </div>
 
-                {/* Sort selector */}
-                <div className="relative">
-                  <select
-                    value={filters.sort}
-                    onChange={(e) =>
-                      setFilters((prev) => ({
-                        ...prev,
-                        sort: e.target.value as FilterState["sort"],
-                      }))
-                    }
-                    className="h-11 rounded-xl border border-input bg-background px-3 text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                <div className="flex items-center gap-2">
+                  {/* Sort selector */}
+                  <div className="relative">
+                    <select
+                      value={filters.sort}
+                      onChange={(e) =>
+                        setFilters((prev) => ({
+                          ...prev,
+                          sort: e.target.value as FilterState["sort"],
+                        }))
+                      }
+                      className="h-9 sm:h-11 rounded-xl border border-input bg-background px-2.5 sm:px-3 text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      {Object.entries(SORT_LABELS).map(([val, label]) => (
+                        <option key={val} value={val}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Mobile Filters Trigger */}
+                  <button
+                    type="button"
+                    onClick={() => setMobileFiltersOpen(true)}
+                    className="flex h-9 sm:h-11 items-center gap-1.5 rounded-xl border border-border bg-card px-3 sm:px-4 text-xs font-bold text-foreground hover:bg-muted lg:hidden shadow-xs active:scale-95"
                   >
-                    {Object.entries(SORT_LABELS).map(([val, label]) => (
-                      <option key={val} value={val}>
-                        الترتيب: {label}
-                      </option>
-                    ))}
-                  </select>
+                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                    <span>الفلاتر</span>
+                    {activeFiltersCount > 0 && (
+                      <span className="grid h-4.5 min-w-[18px] place-items-center rounded-full bg-primary px-1 text-[10px] font-black text-primary-foreground">
+                        {activeFiltersCount}
+                      </span>
+                    )}
+                  </button>
                 </div>
-
-                {/* Mobile Filters Trigger */}
-                <button
-                  type="button"
-                  onClick={() => setMobileFiltersOpen(true)}
-                  className="flex h-11 items-center gap-2 rounded-xl border border-border bg-card px-4 text-xs font-bold text-foreground hover:bg-muted lg:hidden"
-                >
-                  <SlidersHorizontal className="h-4 w-4" />
-                  <span>الفلاتر</span>
-                  {activeFiltersCount > 0 && (
-                    <span className="grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[10px] text-primary-foreground">
-                      {activeFiltersCount}
-                    </span>
-                  )}
-                </button>
               </div>
             </div>
 
@@ -354,7 +357,7 @@ export const ServicesPage: React.FC = () => {
 
             {/* Results Grid */}
             {filteredLines.length > 0 ? (
-              <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
+              <div className="grid gap-3.5 sm:gap-5 grid-cols-1 md:grid-cols-2 2xl:grid-cols-3">
                 {filteredLines.map((line) => (
                   <LineCard
                     key={line.id}
@@ -397,23 +400,23 @@ export const ServicesPage: React.FC = () => {
             )}
 
             {/* Coverage Banner CTA */}
-            <div className="flex flex-col items-center gap-5 rounded-3xl border border-dashed border-border bg-muted/40 p-6 text-center sm:flex-row sm:text-start">
-              <span className="relative grid h-14 w-14 shrink-0 place-items-center rounded-full bg-gold/20 text-gold">
+            <div className="flex flex-col items-center gap-3.5 sm:gap-5 rounded-2xl sm:rounded-3xl border border-dashed border-border bg-muted/40 p-4 sm:p-6 text-center sm:flex-row sm:text-start">
+              <span className="relative grid h-12 w-12 sm:h-14 sm:w-14 shrink-0 place-items-center rounded-full bg-gold/20 text-gold">
                 <span className="absolute inset-0 animate-pulse-ring rounded-full bg-gold/30" />
-                <MapPinned className="relative h-7 w-7" />
+                <MapPinned className="relative h-6 w-6 sm:h-7 sm:w-7" />
               </span>
               <div className="flex-1">
-                <h3 className="font-display text-lg font-extrabold text-foreground">
+                <h3 className="font-display text-base sm:text-lg font-extrabold text-foreground">
                   لم تجد خطاً يغطي منطقتك حتى الآن؟
                 </h3>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="mt-0.5 text-xs sm:text-sm text-muted-foreground">
                   حدد موقعك على الخريطة وأرسل طلبك وسنقوم بتوفير سائق لك في أقرب وقت.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setCoverageModalOpen(true)}
-                className="flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-black text-primary-foreground shadow-md transition-all hover:bg-primary/90 active:scale-95"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 sm:px-6 sm:py-3 text-xs sm:text-sm font-black text-primary-foreground shadow-md transition-all hover:bg-primary/90 active:scale-95"
               >
                 <MapPinned className="h-4 w-4" />
                 حدد موقعك واطلب خطاً
