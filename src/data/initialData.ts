@@ -31,7 +31,8 @@ export const UNIVERSITIES: University[] = [
   { id: "maritime", name: "أكاديمية الخليج العربي للدراسات البحرية (حكومية)", short: "الأكاديمية البحرية", location: { lat: 30.5520, lng: 47.7820 }, type: "government" },
 
   // الجامعات والكليات الأهلية المعترف بها في البصرة
-  { id: "maqal", name: "جامعة المعقل الأهلية", short: "جامعة المعقل", location: { lat: 30.5561, lng: 47.8042 }, type: "private" },
+  { id: "maqal", name: "جامعة المعقل الأهلية (الحرم الرئيسي)", short: "جامعة المعقل", location: { lat: 30.5561, lng: 47.8042 }, type: "private" },
+  { id: "maqal-med", name: "جامعة المعقل - المجموعة الطبية (أهلية)", short: "المعقل (المجموعة الطبية)", location: { lat: 30.5575, lng: 47.8055 }, type: "private" },
   { id: "kunooz", name: "جامعة الكنوز الأهلية", short: "جامعة الكنوز", location: { lat: 30.5420, lng: 47.8120 }, type: "private" },
   { id: "shatt-arab", name: "كلية شط العرب الجامعة الأهلية", short: "كلية شط العرب", location: { lat: 30.5590, lng: 47.8080 }, type: "private" },
   { id: "iraq-col", name: "كلية العراق الجامعة الأهلية", short: "كلية العراق", location: { lat: 30.5220, lng: 47.8250 }, type: "private" },
