@@ -16,11 +16,27 @@ export const INITIAL_FILTERS: FilterState = {
 };
 
 export const UNIVERSITIES: University[] = [
-  { id: "uob-karmat", name: "جامعة البصرة - كرمة علي", short: "كرمة علي", location: { lat: 30.5723, lng: 47.7772 } },
-  { id: "uob-bab", name: "جامعة البصرة - باب الزبير", short: "باب الزبير", location: { lat: 30.4792, lng: 47.7861 } },
-  { id: "maqal", name: "جامعة المعقل", short: "المعقل", location: { lat: 30.5561, lng: 47.8042 } },
-  { id: "bogu", name: "جامعة البصرة للنفط والغاز", short: "النفط والغاز", location: { lat: 30.4994, lng: 47.7063 } },
-  { id: "stu", name: "الجامعة التقنية الجنوبية", short: "التقنية الجنوبية", location: { lat: 30.5301, lng: 47.8103 } }
+  // الجامعات الحكومية في محافظة البصرة
+  { id: "uob-karmat", name: "جامعة البصرة - موقع كرمة علي (حكومية)", short: "كرمة علي", location: { lat: 30.5723, lng: 47.7772 }, type: "government" },
+  { id: "uob-bab", name: "جامعة البصرة - موقع باب الزبير (حكومية)", short: "باب الزبير", location: { lat: 30.4792, lng: 47.7861 }, type: "government" },
+  { id: "uob-med", name: "جامعة البصرة - المجمع الطبي بالبراضعية (حكومية)", short: "مجمع الطب (البراضعية)", location: { lat: 30.5050, lng: 47.8340 }, type: "government" },
+  { id: "uob-qurna", name: "جامعة البصرة - كلية التربية بالقرنة (حكومية)", short: "تربية القرنة", location: { lat: 31.0150, lng: 47.4320 }, type: "government" },
+  { id: "bogu", name: "جامعة البصرة للنفط والغاز (حكومية)", short: "النفط والغاز", location: { lat: 30.4994, lng: 47.7063 }, type: "government" },
+  { id: "stu", name: "الجامعة التقنية الجنوبية - رئاسة الجامعة (حكومية)", short: "التقنية الجنوبية", location: { lat: 30.5301, lng: 47.8103 }, type: "government" },
+  { id: "stu-eng", name: "الكلية التقنية الهندسية - البصرة (حكومية)", short: "التقنية الهندسية", location: { lat: 30.5285, lng: 47.8115 }, type: "government" },
+  { id: "stu-mgmt", name: "الكلية التقنية الإدارية - البصرة (حكومية)", short: "التقنية الإدارية", location: { lat: 30.5270, lng: 47.8085 }, type: "government" },
+  { id: "stu-inst", name: "المعهد التقني - البصرة (حكومي)", short: "المعهد التقني", location: { lat: 30.5295, lng: 47.8095 }, type: "government" },
+  { id: "stu-qurna", name: "المعهد التقني - القرنة (حكومي)", short: "تقني القرنة", location: { lat: 31.0180, lng: 47.4350 }, type: "government" },
+  { id: "oil-inst", name: "معهد التدريب النفطي - البصرة (حكومي)", short: "معهد النفط", location: { lat: 30.5180, lng: 47.7750 }, type: "government" },
+  { id: "maritime", name: "أكاديمية الخليج العربي للدراسات البحرية (حكومية)", short: "الأكاديمية البحرية", location: { lat: 30.5520, lng: 47.7820 }, type: "government" },
+
+  // الجامعات والكليات الأهلية المعترف بها في البصرة
+  { id: "maqal", name: "جامعة المعقل الأهلية", short: "جامعة المعقل", location: { lat: 30.5561, lng: 47.8042 }, type: "private" },
+  { id: "kunooz", name: "جامعة الكنوز الأهلية", short: "جامعة الكنوز", location: { lat: 30.5420, lng: 47.8120 }, type: "private" },
+  { id: "shatt-arab", name: "كلية شط العرب الجامعة الأهلية", short: "كلية شط العرب", location: { lat: 30.5590, lng: 47.8080 }, type: "private" },
+  { id: "iraq-col", name: "كلية العراق الجامعة الأهلية", short: "كلية العراق", location: { lat: 30.5220, lng: 47.8250 }, type: "private" },
+  { id: "basra-tech", name: "كلية البصرة للعلوم والتكنولوجيا الجامعة (أهلية)", short: "البصرة للعلوم والتكنولوجيا", location: { lat: 30.5350, lng: 47.7950 }, type: "private" },
+  { id: "alsharq", name: "كلية الشرق للعلوم التقنية التخصصية (أهلية)", short: "كلية الشرق", location: { lat: 30.5400, lng: 47.8000 }, type: "private" },
 ];
 
 export const AREAS: string[] = [

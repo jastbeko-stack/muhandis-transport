@@ -8,6 +8,7 @@ export interface University {
   name: string;
   short: string;
   location: Coordinates;
+  type?: "government" | "private";
 }
 
 export interface VehicleInfo {
