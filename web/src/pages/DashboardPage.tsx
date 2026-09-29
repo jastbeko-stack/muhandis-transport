@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Lock,
   UserCog,
@@ -9,7 +10,7 @@ import {
   XCircle,
   Trash2,
   ExternalLink,
-  MessageCircle,
+  MessageSquare,
   MapPin,
 } from "lucide-react";
 import { usePlatform } from "../context/PlatformContext";
@@ -419,15 +420,13 @@ export const DashboardPage: React.FC = () => {
                         <ExternalLink className="h-3 w-3" />
                       </a>
 
-                      <a
-                        href={`https://wa.me/964${req.phone.replace(/\D/g, "").replace(/^0/, "")}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 rounded-xl bg-whatsapp px-3.5 py-2 text-xs font-bold text-white hover:bg-whatsapp/90"
+                      <Link
+                        to="/messages"
+                        className="flex items-center gap-1.5 rounded-xl bg-[#286058] hover:bg-[#204e47] px-3.5 py-2 text-xs font-bold text-white transition-all active:scale-95"
                       >
-                        <MessageCircle className="h-3.5 w-3.5" />
-                        واتساب
-                      </a>
+                        <MessageSquare className="h-3.5 w-3.5" />
+                        مراسلة داخل البرنامج
+                      </Link>
                     </div>
                   </div>
                 );

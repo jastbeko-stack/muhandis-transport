@@ -154,7 +154,7 @@ export const AddLineModal: React.FC<AddLineModalProps> = ({ open, onOpenChange }
             </div>
             <div>
               <label className="mb-1 block text-xs font-bold text-foreground">
-                رقم الهاتف (واتساب) *
+                رقم الهاتف للتواصل *
               </label>
               <input
                 type="tel"

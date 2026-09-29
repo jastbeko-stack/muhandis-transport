@@ -242,7 +242,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
               )}
             >
               <Phone className="h-3.5 w-3.5" />
-              رقم الهاتف (واتساب)
+              رقم الهاتف
             </button>
             <button
               type="button"
@@ -285,7 +285,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
             {method === "phone" && (
               <div>
                 <label className="mb-1 block text-xs font-bold text-foreground">
-                  رقم الهاتف (واتساب) *
+                  رقم الهاتف *
                 </label>
                 <div className="relative">
                   <Phone className="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

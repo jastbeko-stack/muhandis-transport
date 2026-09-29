@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Bus,
   Crown,
@@ -8,7 +9,7 @@ import {
   CheckCircle2,
   Users,
   PlusCircle,
-  MessageCircle,
+  MessageSquare,
   Sparkles,
   LogOut,
   GraduationCap,
@@ -334,17 +335,13 @@ export const DriverPortalPage: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <a
-                    href={`https://wa.me/964${req.phone.slice(1)}?text=${encodeURIComponent(
-                      `مرحباً ${req.studentName}، بخصوص حجزك على خط ${driverLine?.fromArea} إلى الجامعة، تتوفر مقاعد شاغرة للدوام.`
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 rounded-xl bg-whatsapp px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-whatsapp/90 active:scale-95"
+                  <Link
+                    to="/messages"
+                    className="flex items-center gap-1.5 rounded-xl bg-[#286058] hover:bg-[#204e47] px-4 py-2 text-xs font-bold text-white shadow-sm transition-all active:scale-95"
                   >
-                    <MessageCircle className="h-4 w-4" />
-                    مراسلة بالواتساب
-                  </a>
+                    <MessageSquare className="h-4 w-4" />
+                    مراسلة داخل البرنامج
+                  </Link>
                 </div>
               </div>
             ))}
