@@ -30,17 +30,22 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAddLine }) => {
     return path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
   };
 
-  const navItems = [
-    { to: "/", label: "الرئيسية", icon: House },
-    { to: "/services", label: "الخطوط", icon: LayoutList },
-    {
-      to: user?.role === "driver" ? "/driver" : "/student",
-      label: user?.role === "driver" ? "بوابة السائق" : "ملفي الجامعي",
-      icon: user?.role === "driver" ? Bus : GraduationCap,
-    },
-    { to: "/messages", label: "الرسائل", icon: MessageSquare },
-    { to: "/dashboard", label: "لوحة المشرف", icon: Gauge },
-  ];
+  const navItems =
+    user?.role === "driver"
+      ? [
+          { to: "/driver", label: "لوحة السائق", icon: Gauge },
+          { to: "/", label: "الخريطة المباشرة", icon: House },
+          { to: "/trips", label: "طلبات الركاب", icon: BusFront },
+          { to: "/messages", label: "الرسائل", icon: MessageSquare },
+          { to: "/services", label: "دليل الخطوط", icon: LayoutList },
+        ]
+      : [
+          { to: "/", label: "الرئيسية", icon: House },
+          { to: "/services", label: "الخطوط المعتمدة", icon: LayoutList },
+          { to: "/trips", label: "رحلاتي", icon: BusFront },
+          { to: "/messages", label: "الرسائل", icon: MessageSquare },
+          { to: "/student", label: "ملفي الجامعي", icon: GraduationCap },
+        ];
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 brand-surface backdrop-blur-md">

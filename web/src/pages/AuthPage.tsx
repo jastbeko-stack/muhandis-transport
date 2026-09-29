@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   GraduationCap,
   Bus,
@@ -21,6 +22,7 @@ interface AuthPageProps {
 }
 
 export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
+  const navigate = useNavigate();
   const { loginWithPhone, loginWithEmail, register, quickDemoLogin } = useAuth();
   const { submitLine } = usePlatform();
 
@@ -120,6 +122,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
       }
 
       onSuccess?.();
+      if (role === "driver") {
+        navigate("/driver");
+      } else {
+        navigate("/");
+      }
     } catch {
       toast.error("حدث خطأ أثناء تسجيل الدخول، يرجى المحاولة ثانية");
     } finally {
@@ -133,6 +140,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
       `تم الدخول السريع بحساب تجريبي كـ ${selectedRole === "student" ? "طالب (زينب)" : "سائق (أبو مصطفى)"}`
     );
     onSuccess?.();
+    if (selectedRole === "driver") {
+      navigate("/driver");
+    } else {
+      navigate("/");
+    }
   };
 
   return (

@@ -401,70 +401,129 @@ export const HomePage: React.FC = () => {
         </button>
       </div>
 
-      {/* 3. Bottom Floating Card ("وين خطك اليومي؟") */}
+      {/* 3. Bottom Floating Card ("وين خطك اليومي؟" for Student vs "لوحة الكابتن" for Driver) */}
       <div className="absolute bottom-[calc(3.85rem+env(safe-area-inset-bottom,0px))] sm:bottom-20 inset-x-3 sm:inset-x-6 z-30 max-w-md mx-auto pointer-events-auto">
-        <div className="rounded-2xl sm:rounded-3xl bg-white dark:bg-card p-3.5 sm:p-5 shadow-[0_10px_35px_rgba(0,0,0,0.14)] border border-gray-150/90 dark:border-border transition-all">
-          {/* Card Title */}
-          <div
-            onClick={() => setRegisterTripSheetOpen(true)}
-            className="flex items-center justify-between cursor-pointer group mb-2.5 sm:mb-4"
-          >
-            <h2 className="text-base sm:text-2xl font-black text-[#1e293b] dark:text-foreground text-start font-display group-hover:text-[#246158] transition-colors">
-              وين خطك اليومي؟
-            </h2>
-            <span className="text-[11px] sm:text-xs font-black text-[#286058] bg-[#eaf4f2] px-2.5 py-0.5 rounded-full border border-[#286058]/20">
-              سجّل الآن
-            </span>
-          </div>
+        {user?.role === "driver" ? (
+          <div className="rounded-2xl sm:rounded-3xl bg-white dark:bg-card p-3.5 sm:p-5 shadow-[0_10px_35px_rgba(0,0,0,0.14)] border border-gray-150/90 dark:border-border transition-all animate-fade-in">
+            {/* Driver Header */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-black text-lg">
+                  🚗
+                </div>
+                <div>
+                  <h2 className="text-sm sm:text-base font-black text-foreground font-display">
+                    أهلاً بك كابتن {user?.name?.split(" ")[0] || "السائق"}
+                  </h2>
+                  <p className="text-[11px] text-muted-foreground font-medium">
+                    لوحة متابعة وإدارة خطوط نقل الطلاب
+                  </p>
+                </div>
+              </div>
+              <span className="text-[10px] sm:text-xs font-black text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2.5 py-1 rounded-full border border-amber-300 dark:border-amber-700/50">
+                حساب كابتن
+              </span>
+            </div>
 
-          {/* Inputs Section */}
-          <div className="rounded-xl sm:rounded-2xl border border-gray-150 dark:border-border bg-white dark:bg-card overflow-hidden divide-y divide-gray-100 dark:divide-border shadow-inner-sm">
-            {/* Row 1: Start Location (منين تطلع؟) */}
+            {/* Quick Vehicle / Status Summary */}
+            <div className="grid grid-cols-2 gap-2 my-2.5">
+              <div className="p-2 sm:p-2.5 rounded-xl bg-gray-50 dark:bg-muted/40 border border-gray-100 dark:border-border text-center">
+                <p className="text-[10px] text-muted-foreground font-medium">نوع المركبة</p>
+                <p className="text-xs sm:text-sm font-black text-foreground truncate">
+                  {user?.vehicleModel || "كيا سبورتاج / باص"}
+                </p>
+              </div>
+              <div className="p-2 sm:p-2.5 rounded-xl bg-gray-50 dark:bg-muted/40 border border-gray-100 dark:border-border text-center">
+                <p className="text-[10px] text-muted-foreground font-medium">المقاعد المتاحة</p>
+                <p className="text-xs sm:text-sm font-black text-[#286058]">
+                  {user?.totalSeats || 14} مقعد
+                </p>
+              </div>
+            </div>
+
+            {/* Driver Actions */}
+            <div className="grid grid-cols-2 gap-2 mt-3">
+              <button
+                type="button"
+                onClick={() => navigate("/driver")}
+                className="w-full py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-[#286058] hover:bg-[#204e47] active:scale-[0.98] text-white font-black text-xs sm:text-sm shadow-[0_4px_16px_rgba(40,96,88,0.25)] transition-all flex items-center justify-center gap-1.5"
+              >
+                لوحة السائق
+              </button>
+              <button
+                type="button"
+                onClick={() => setAddLineModalOpen(true)}
+                className="w-full py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-amber-500 hover:bg-amber-600 active:scale-[0.98] text-white font-black text-xs sm:text-sm shadow-[0_4px_16px_rgba(245,158,11,0.25)] transition-all flex items-center justify-center gap-1.5"
+              >
+                <Plus className="w-4 h-4" />
+                أضف خط جديد
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-2xl sm:rounded-3xl bg-white dark:bg-card p-3.5 sm:p-5 shadow-[0_10px_35px_rgba(0,0,0,0.14)] border border-gray-150/90 dark:border-border transition-all">
+            {/* Card Title */}
+            <div
+              onClick={() => setRegisterTripSheetOpen(true)}
+              className="flex items-center justify-between cursor-pointer group mb-2.5 sm:mb-4"
+            >
+              <h2 className="text-base sm:text-2xl font-black text-[#1e293b] dark:text-foreground text-start font-display group-hover:text-[#246158] transition-colors">
+                وين خطك اليومي؟
+              </h2>
+              <span className="text-[11px] sm:text-xs font-black text-[#286058] bg-[#eaf4f2] px-2.5 py-0.5 rounded-full border border-[#286058]/20">
+                سجّل الآن
+              </span>
+            </div>
+
+            {/* Inputs Section */}
+            <div className="rounded-xl sm:rounded-2xl border border-gray-150 dark:border-border bg-white dark:bg-card overflow-hidden divide-y divide-gray-100 dark:divide-border shadow-inner-sm">
+              {/* Row 1: Start Location (منين تطلع؟) */}
+              <button
+                type="button"
+                onClick={() => setRegisterTripSheetOpen(true)}
+                className="w-full flex items-center justify-between p-2.5 sm:p-3.5 text-start hover:bg-gray-50/60 dark:hover:bg-muted/40 transition-colors"
+              >
+                <span
+                  className={cn(
+                    "text-xs sm:text-sm font-bold flex-1 truncate",
+                    fromArea ? "text-foreground font-black" : "text-gray-400 dark:text-muted-foreground"
+                  )}
+                >
+                  {fromArea ? `منطقة: ${fromArea}` : "منين تطلع؟"}
+                </span>
+                {/* Teal Ring Icon on Right (RTL) */}
+                <span className="h-3.5 w-3.5 sm:h-4 sm:w-4 rounded-full border-[2.5px] border-[#246158] inline-block shrink-0 ml-1" />
+              </button>
+
+              {/* Row 2: Destination Location (وين تروح؟) */}
+              <button
+                type="button"
+                onClick={() => setRegisterTripSheetOpen(true)}
+                className="w-full flex items-center justify-between p-2.5 sm:p-3.5 text-start hover:bg-gray-50/60 dark:hover:bg-muted/40 transition-colors"
+              >
+                <span
+                  className={cn(
+                    "text-xs sm:text-sm font-bold flex-1 truncate",
+                    toUniversity ? "text-foreground font-black" : "text-gray-400 dark:text-muted-foreground"
+                  )}
+                >
+                  {toUniversity ? `الجامعة: ${toUniversity}` : "وين تروح؟"}
+                </span>
+                {/* Terracotta Solid Square Icon on Right (RTL) */}
+                <span className="h-3 w-3 sm:h-3.5 sm:w-3.5 rounded-[3px] bg-[#9e4a2e] inline-block shrink-0 ml-1" />
+              </button>
+            </div>
+
+            {/* Primary Action Button (سجّل خطك) */}
             <button
               type="button"
-              onClick={() => setRegisterTripSheetOpen(true)}
-              className="w-full flex items-center justify-between p-2.5 sm:p-3.5 text-start hover:bg-gray-50/60 dark:hover:bg-muted/40 transition-colors"
+              onClick={handleMainActionClick}
+              className="w-full mt-3 sm:mt-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#286058] hover:bg-[#204e47] active:scale-[0.98] text-white font-black text-sm sm:text-base shadow-[0_4px_16px_rgba(40,96,88,0.3)] transition-all flex items-center justify-center gap-2"
             >
-              <span
-                className={cn(
-                  "text-xs sm:text-sm font-bold flex-1 truncate",
-                  fromArea ? "text-foreground font-black" : "text-gray-400 dark:text-muted-foreground"
-                )}
-              >
-                {fromArea ? `منطقة: ${fromArea}` : "منين تطلع؟"}
-              </span>
-              {/* Teal Ring Icon on Right (RTL) */}
-              <span className="h-3.5 w-3.5 sm:h-4 sm:w-4 rounded-full border-[2.5px] border-[#246158] inline-block shrink-0 ml-1" />
-            </button>
-
-            {/* Row 2: Destination Location (وين تروح؟) */}
-            <button
-              type="button"
-              onClick={() => setRegisterTripSheetOpen(true)}
-              className="w-full flex items-center justify-between p-2.5 sm:p-3.5 text-start hover:bg-gray-50/60 dark:hover:bg-muted/40 transition-colors"
-            >
-              <span
-                className={cn(
-                  "text-xs sm:text-sm font-bold flex-1 truncate",
-                  toUniversity ? "text-foreground font-black" : "text-gray-400 dark:text-muted-foreground"
-                )}
-              >
-                {toUniversity ? `الجامعة: ${toUniversity}` : "وين تروح؟"}
-              </span>
-              {/* Terracotta Solid Square Icon on Right (RTL) */}
-              <span className="h-3 w-3 sm:h-3.5 sm:w-3.5 rounded-[3px] bg-[#9e4a2e] inline-block shrink-0 ml-1" />
+              سجّل خطك
             </button>
           </div>
-
-          {/* Primary Action Button (سجّل خطك) */}
-          <button
-            type="button"
-            onClick={handleMainActionClick}
-            className="w-full mt-3 sm:mt-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl bg-[#286058] hover:bg-[#204e47] active:scale-[0.98] text-white font-black text-sm sm:text-base shadow-[0_4px_16px_rgba(40,96,88,0.3)] transition-all flex items-center justify-center gap-2"
-          >
-            سجّل خطك
-          </button>
-        </div>
+        )}
       </div>
 
       {/* Area Picker Bottom Sheet */}

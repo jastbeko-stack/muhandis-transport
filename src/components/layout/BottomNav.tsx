@@ -5,7 +5,10 @@ import {
   Map,
   BusFront,
   MessageSquare,
-  User,
+  Gauge,
+  Users,
+  LayoutList,
+  GraduationCap,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { cn } from "../../utils/formatters";
@@ -21,38 +24,72 @@ export const BottomNav: React.FC = () => {
     return location.pathname.startsWith(path);
   };
 
-  const navItems = [
-    {
-      to: "/",
-      label: "الرئيسية",
-      icon: House,
-      active: isActive("/"),
-    },
-    {
-      to: "/services",
-      label: "الخطوط",
-      icon: Map,
-      active: isActive("/services"),
-    },
-    {
-      to: "/trips",
-      label: "رحلاتي",
-      icon: BusFront,
-      active: isActive("/trips"),
-    },
-    {
-      to: "/messages",
-      label: "الرسائل",
-      icon: MessageSquare,
-      active: isActive("/messages"),
-    },
-    {
-      to: user?.role === "driver" ? "/driver" : "/student",
-      label: "حسابي",
-      icon: User,
-      active: isActive("/student") || isActive("/driver") || isActive("/profile"),
-    },
-  ];
+  const navItems =
+    user?.role === "driver"
+      ? [
+          {
+            to: "/driver",
+            label: "لوحة السائق",
+            icon: Gauge,
+            active: isActive("/driver"),
+          },
+          {
+            to: "/",
+            label: "الخريطة",
+            icon: Map,
+            active: isActive("/"),
+          },
+          {
+            to: "/trips",
+            label: "طلبات الركاب",
+            icon: Users,
+            active: isActive("/trips"),
+          },
+          {
+            to: "/messages",
+            label: "الرسائل",
+            icon: MessageSquare,
+            active: isActive("/messages"),
+          },
+          {
+            to: "/services",
+            label: "الخطوط",
+            icon: LayoutList,
+            active: isActive("/services"),
+          },
+        ]
+      : [
+          {
+            to: "/",
+            label: "الرئيسية",
+            icon: House,
+            active: isActive("/"),
+          },
+          {
+            to: "/services",
+            label: "الخطوط",
+            icon: Map,
+            active: isActive("/services"),
+          },
+          {
+            to: "/trips",
+            label: "رحلاتي",
+            icon: BusFront,
+            active: isActive("/trips"),
+          },
+          {
+            to: "/messages",
+            label: "الرسائل",
+            icon: MessageSquare,
+            active: isActive("/messages"),
+          },
+          {
+            to: "/student",
+            label: "ملفي الجامعي",
+            icon: GraduationCap,
+            active: isActive("/student") || isActive("/profile"),
+          },
+        ];
 
   return (
     <nav

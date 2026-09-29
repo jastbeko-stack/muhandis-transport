@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   BusFront,
@@ -8,16 +8,232 @@ import {
   ChevronLeft,
   Sparkles,
   ShieldCheck,
+  Users,
+  CheckCircle2,
+  MapPin,
+  GraduationCap,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 import { usePlatform } from "../context/PlatformContext";
 import { formatPrice } from "../utils/formatters";
+import { toast } from "sonner";
 
 export const TripsPage: React.FC = () => {
+  const { user } = useAuth();
   const { lines } = usePlatform();
 
-  // Demo active trip based on user or first line
-  const activeTrip = lines[0];
+  const isDriver = user?.role === "driver";
 
+  // Demo active trip based on user or first line
+  const activeTrip = lines.find((l) => l.driverPhone === user?.phone || l.driverName === user?.name) || lines[0];
+
+  // Mock list of driver requests / passengers with acceptance state
+  const [passengers, setPassengers] = useState([
+    {
+      id: "req-1",
+      studentName: "مريم العبادي",
+      phone: "07801122334",
+      area: "الزبير - قرب المستشفى",
+      college: "كلية الهندسة - كرمة علي",
+      time: "صباحاً 07:15",
+      status: "confirmed",
+    },
+    {
+      id: "req-2",
+      studentName: "كرار حيدر الجابري",
+      phone: "07709988776",
+      area: "الزبير - ساحة الاحتفالات",
+      college: "كلية العلوم - كرمة علي",
+      time: "صباحاً 07:30",
+      status: "confirmed",
+    },
+    {
+      id: "req-3",
+      studentName: "زينب علي المالكي",
+      phone: "07804455667",
+      area: "الزبير - حي الشهداء",
+      college: "كلية الصيدلة - المعقل",
+      time: "صباحاً 07:20",
+      status: "pending",
+    },
+    {
+      id: "req-4",
+      studentName: "حسين قاسم الأسدي",
+      phone: "07712233445",
+      area: "القبلة - شارع المعارض",
+      college: "جامعة البصرة للنفط والغاز",
+      time: "صباحاً 07:40",
+      status: "pending",
+    },
+  ]);
+
+  const handleConfirmPassenger = (id: string, name: string) => {
+    setPassengers((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, status: "confirmed" } : p))
+    );
+    toast.success(`تم تأكيد اشتراك الطالب ${name} في خطك بنجاح!`);
+  };
+
+  // If user is a DRIVER
+  if (isDriver) {
+    const totalSeats = activeTrip?.vehicle?.seats || user?.totalSeats || 14;
+    const confirmedCount = passengers.filter((p) => p.status === "confirmed").length;
+    const remainingSeats = Math.max(0, totalSeats - confirmedCount);
+    const monthlyRate = activeTrip?.monthlyPrice || 35000;
+    const totalEstIncome = confirmedCount * monthlyRate;
+
+    return (
+      <div className="flex-1 min-h-[calc(100vh-4rem)] bg-gradient-to-b from-[#f4f7f6] to-background py-6 px-4 pb-24">
+        <div className="container max-w-xl mx-auto space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-black text-foreground font-display">
+                طلبات وركاب الخط
+              </h1>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                متابعة قوائم الطلاب المشتركين وطلبات الانضمام لمركبتك
+              </p>
+            </div>
+            <span className="inline-flex items-center gap-1.5 text-xs font-black bg-amber-500/10 text-amber-700 dark:text-amber-400 px-3 py-1 rounded-full border border-amber-300">
+              <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+              لوحة الكابتن
+            </span>
+          </div>
+
+          {/* Line Overview Card */}
+          {activeTrip && (
+            <div className="bg-card border border-border/80 rounded-3xl p-5 shadow-lg space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-border">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold">
+                    <BusFront className="h-6 w-6 stroke-[2.2]" />
+                  </div>
+                  <div>
+                    <h2 className="font-bold text-base text-foreground">
+                      خط {activeTrip.fromArea} ⟵ {activeTrip.toArea}
+                    </h2>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      مركبة: {activeTrip.vehicle?.model || user?.vehicleModel || "صالون / باص"}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-end">
+                  <span className="text-xs font-black text-[#246158] bg-[#eaf4f2] dark:bg-[#246158]/20 px-2.5 py-1 rounded-xl">
+                    {formatPrice(monthlyRate)} / مقعد
+                  </span>
+                </div>
+              </div>
+
+              {/* Passenger & Seats Stats */}
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="p-3 rounded-2xl bg-muted/40 border border-border">
+                  <p className="text-[10px] text-muted-foreground font-medium">الركاب المؤكدين</p>
+                  <p className="text-base font-black text-foreground mt-0.5">{confirmedCount}</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-[#eaf4f2] dark:bg-[#246158]/20 border border-[#246158]/20">
+                  <p className="text-[10px] text-[#246158] font-medium">المقاعد الشاغرة</p>
+                  <p className="text-base font-black text-[#246158] mt-0.5">{remainingSeats}</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-300/30">
+                  <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium">الدخل المتوقع</p>
+                  <p className="text-xs sm:text-sm font-black text-amber-700 dark:text-amber-400 mt-0.5 truncate">
+                    {formatPrice(totalEstIncome)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick links to Driver Portal */}
+              <div className="flex items-center gap-2 pt-1">
+                <Link
+                  to="/driver"
+                  className="flex-1 py-2.5 rounded-xl bg-[#286058] hover:bg-[#204e47] text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                >
+                  إدارة المقاعد والخط بالتفصيل
+                  <ChevronLeft className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {/* Passenger Manifest / Requests */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
+                <Users className="h-4 w-4 text-[#246158]" />
+                قائمة الركاب والطلبات الحالية ({passengers.length})
+              </h3>
+            </div>
+
+            <div className="space-y-3">
+              {passengers.map((passenger) => (
+                <div
+                  key={passenger.id}
+                  className="bg-card border border-border/80 rounded-2xl p-4 shadow-sm space-y-3 transition-all hover:border-[#246158]/40"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-sm text-foreground">{passenger.studentName}</h4>
+                        {passenger.status === "confirmed" ? (
+                          <span className="text-[10px] font-black text-green-700 bg-green-50 dark:bg-green-950/40 px-2 py-0.5 rounded-full border border-green-200">
+                            مشترك مؤكد
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-black text-amber-700 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full border border-amber-300">
+                            طلب انضمام جديد
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-0.5 mt-1 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <GraduationCap className="h-3.5 w-3.5 text-[#246158]" />
+                          {passenger.college}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                          {passenger.area} ({passenger.time})
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-2 border-t border-border">
+                    {passenger.status === "pending" && (
+                      <button
+                        type="button"
+                        onClick={() => handleConfirmPassenger(passenger.id, passenger.studentName)}
+                        className="flex-1 py-2 rounded-xl bg-[#286058] hover:bg-[#204e47] text-white font-bold text-xs flex items-center justify-center gap-1 transition-all active:scale-95"
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        قبول وتأكيد
+                      </button>
+                    )}
+                    <Link
+                      to="/messages"
+                      className="flex-1 py-2 rounded-xl border border-border hover:bg-muted font-bold text-xs flex items-center justify-center gap-1 transition-all active:scale-95 text-foreground"
+                    >
+                      <MessageSquare className="h-3.5 w-3.5 text-[#246158]" />
+                      مراسلة
+                    </Link>
+                    <a
+                      href={`tel:${passenger.phone}`}
+                      className="py-2 px-3 rounded-xl border border-border hover:bg-muted font-bold text-xs flex items-center justify-center gap-1 transition-all active:scale-95 text-[#246158]"
+                      title="اتصال هاتفي"
+                    >
+                      <Phone className="h-3.5 w-3.5" />
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is a STUDENT (Default View)
   return (
     <div className="flex-1 min-h-[calc(100vh-4rem)] bg-gradient-to-b from-[#f4f7f6] to-background py-6 px-4 pb-24">
       <div className="container max-w-xl mx-auto space-y-6">
