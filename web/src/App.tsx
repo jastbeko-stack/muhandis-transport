@@ -37,6 +37,7 @@ function AppContent() {
   }
 
   const isHomePage = location.pathname === "/" || location.pathname === "/home";
+  const isMessagesPage = location.pathname.startsWith("/messages");
 
   return (
     <div
@@ -44,17 +45,19 @@ function AppContent() {
         "flex min-h-screen flex-col bg-background text-foreground w-full max-w-full overflow-x-hidden",
         isHomePage
           ? "h-screen overflow-hidden"
+          : isMessagesPage
+          ? "h-screen h-[100dvh] overflow-hidden pb-[calc(4.4rem+env(safe-area-inset-bottom,0px))] lg:pb-0"
           : "pb-[calc(4.8rem+env(safe-area-inset-bottom,0px))] lg:pb-0"
       )}
     >
       <Toaster position="top-center" dir="rtl" richColors closeButton />
 
-      {/* Hide navbar on mobile when on home page so the map is full-screen matching screenshot */}
-      <div className={cn(isHomePage && "hidden lg:block", "w-full max-w-full")}>
+      {/* Hide navbar on mobile when on home page or messages page so chat is full-screen and native */}
+      <div className={cn((isHomePage || isMessagesPage) && "hidden lg:block", "w-full max-w-full")}>
         <Navbar onOpenAddLine={() => setAddLineModalOpen(true)} />
       </div>
 
-      <div className={cn("flex flex-1 flex-col w-full min-w-0 max-w-full", isHomePage && "h-full overflow-hidden")}>
+      <div className={cn("flex flex-1 flex-col w-full min-w-0 max-w-full", (isHomePage || isMessagesPage) && "h-full overflow-hidden")}>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/home" element={<HomePage />} />
