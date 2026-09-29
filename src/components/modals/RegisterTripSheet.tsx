@@ -36,7 +36,7 @@ export const RegisterTripSheet: React.FC<RegisterTripSheetProps> = ({
   const [returnTime, setReturnTime] = useState("");
   const [personCount, setPersonCount] = useState(1);
   const [forWhom, setForWhom] = useState<"me" | "daughter" | "son">("me");
-  const [genderType, setGenderType] = useState<"youth" | "mixed">("youth");
+  const [genderType, setGenderType] = useState<"youth" | "girls" | "mixed">("youth");
   const [allowCall, setAllowCall] = useState(true);
   const [allowChat, setAllowChat] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -95,6 +95,7 @@ export const RegisterTripSheet: React.FC<RegisterTripSheetProps> = ({
       const params = new URLSearchParams();
       params.set("area", fromArea.trim());
       params.set("shift", shift);
+      params.set("gender", genderType);
       navigate(`/services?${params.toString()}`);
     } catch (err) {
       console.warn("Failed to submit trip request:", err);
@@ -350,7 +351,11 @@ export const RegisterTripSheet: React.FC<RegisterTripSheetProps> = ({
               <button
                 key={opt.id}
                 type="button"
-                onClick={() => setForWhom(opt.id as any)}
+                onClick={() => {
+                  setForWhom(opt.id as any);
+                  if (opt.id === "daughter") setGenderType("girls");
+                  if (opt.id === "son") setGenderType("youth");
+                }}
                 className={cn(
                   "flex-1 py-2 rounded-xl text-xs font-black transition-all text-center",
                   forWhom === opt.id
@@ -367,34 +372,29 @@ export const RegisterTripSheet: React.FC<RegisterTripSheetProps> = ({
           </p>
         </div>
 
-        {/* Section 7: نوع الخط (شباب / مختلط) */}
+        {/* Section 7: نوع الخط (شباب / بنات / مختلط) */}
         <div className="rounded-2xl border border-border/80 bg-white dark:bg-card p-4 shadow-xs space-y-2">
           <label className="block text-xs font-black text-foreground">نوع الخط</label>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setGenderType("youth")}
-              className={cn(
-                "flex-1 py-2.5 rounded-xl text-xs font-black transition-all text-center",
-                genderType === "youth"
-                  ? "border-2 border-[#246158] text-[#246158] bg-[#eaf4f2]/60 shadow-xs"
-                  : "border border-border text-foreground bg-muted/20 hover:bg-muted"
-              )}
-            >
-              شباب
-            </button>
-            <button
-              type="button"
-              onClick={() => setGenderType("mixed")}
-              className={cn(
-                "flex-1 py-2.5 rounded-xl text-xs font-black transition-all text-center",
-                genderType === "mixed"
-                  ? "border-2 border-[#246158] text-[#246158] bg-[#eaf4f2]/60 shadow-xs"
-                  : "border border-border text-foreground bg-muted/20 hover:bg-muted"
-              )}
-            >
-              مختلط
-            </button>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { id: "youth", label: "شباب" },
+              { id: "girls", label: "بنات" },
+              { id: "mixed", label: "مختلط" },
+            ].map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setGenderType(item.id as "youth" | "girls" | "mixed")}
+                className={cn(
+                  "py-2.5 rounded-xl text-xs font-black transition-all text-center",
+                  genderType === item.id
+                    ? "border-2 border-[#246158] text-[#246158] bg-[#eaf4f2]/60 shadow-xs"
+                    : "border border-border text-foreground bg-muted/20 hover:bg-muted"
+                )}
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
         </div>
 

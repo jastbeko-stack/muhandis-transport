@@ -256,6 +256,7 @@ export const ServicesPage: React.FC = () => {
               <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                 {[
                   { id: "all", label: "الكل" },
+                  { id: "youth", label: "شباب 👨‍🎓" },
                   { id: "girls", label: "بنات فقط 🌸" },
                   { id: "mixed", label: "مختلط 👥" },
                 ].map((item) => (
@@ -296,7 +297,7 @@ export const ServicesPage: React.FC = () => {
 
                 {filters.gender !== "all" && (
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/60 px-3 py-1 text-xs font-bold text-foreground">
-                    {filters.gender === "girls" ? "بنات فقط" : "مختلط"}
+                    {filters.gender === "girls" ? "بنات فقط" : filters.gender === "youth" ? "شباب" : "مختلط"}
                     <button
                       type="button"
                       onClick={() => setFilters((prev) => ({ ...prev, gender: "all" }))}

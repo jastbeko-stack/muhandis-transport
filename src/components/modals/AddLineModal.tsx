@@ -267,6 +267,7 @@ export const AddLineModal: React.FC<AddLineModalProps> = ({ open, onOpenChange }
                 className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm font-bold text-foreground"
               >
                 <option value="girls">بنات فقط</option>
+                <option value="youth">شباب</option>
                 <option value="mixed">مختلط</option>
               </select>
             </div>

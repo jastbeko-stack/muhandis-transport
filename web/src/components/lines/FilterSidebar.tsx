@@ -114,10 +114,11 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
       {/* Gender Filter */}
       <div className="space-y-2.5">
         <label className="block text-xs font-bold text-muted-foreground">نوع الخط (الركاب)</label>
-        <div className="grid grid-cols-3 gap-1.5 rounded-xl bg-muted/50 p-1">
+        <div className="grid grid-cols-4 gap-1 rounded-xl bg-muted/50 p-1">
           {[
             { id: "all", label: "الكل" },
-            { id: "girls", label: "بنات فقط" },
+            { id: "youth", label: "شباب" },
+            { id: "girls", label: "بنات" },
             { id: "mixed", label: "مختلط" },
           ].map((item) => (
             <button

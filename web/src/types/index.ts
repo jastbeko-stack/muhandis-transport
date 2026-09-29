@@ -16,7 +16,7 @@ export interface VehicleInfo {
   seats: number;
 }
 
-export type GenderType = "girls" | "mixed";
+export type GenderType = "girls" | "youth" | "mixed";
 export type ShiftType = "morning" | "evening" | "full";
 export type LineStatus = "active" | "pending" | "rejected";
 export type UserRole = "student" | "driver";
