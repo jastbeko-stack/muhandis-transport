@@ -1,8 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
 
-// Read Supabase credentials from Vite environment variables
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+const DEFAULT_SUPABASE_URL = "https://mhcufxoqwiavzzcxzqts.supabase.co";
+const DEFAULT_SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1oY3VmeG9xd2lhdnp6Y3h6cXRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4OTM2ODEsImV4cCI6MjEwMzQ2OTY4MX0.a3WvALeRXcyh7yU3r3af-A9OJKyqDkDlDAf5euO5n5Y";
+
+// Read Supabase credentials from Vite environment variables or reliable production fallback
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
 
 export const isSupabaseConfigured = Boolean(
   supabaseUrl &&
@@ -11,10 +15,7 @@ export const isSupabaseConfigured = Boolean(
 );
 
 // Initialize Supabase Client
-export const supabase = createClient(
-  supabaseUrl || "https://placeholder.supabase.co",
-  supabaseAnonKey || "placeholder-anon-key"
-);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Helper database services
 export const supabaseService = {
@@ -34,12 +35,28 @@ export const supabaseService = {
     return data;
   },
 
+  // Fetch all user profiles (drivers & students)
+  async getProfiles() {
+    if (!isSupabaseConfigured) return null;
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.warn("Supabase getProfiles error:", error.message);
+      return null;
+    }
+    return data;
+  },
+
   // Fetch approved transport lines
   async getLines() {
     if (!isSupabaseConfigured) return null;
     const { data, error } = await supabase
       .from("transport_lines")
       .select("*")
+      .eq("status", "approved")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -93,6 +110,21 @@ export const supabaseService = {
 
     if (error) {
       console.warn("Supabase submitCoverageRequest error:", error.message);
+      return null;
+    }
+    return data;
+  },
+
+  // Fetch all coverage requests (student line requests)
+  async getCoverageRequests() {
+    if (!isSupabaseConfigured) return null;
+    const { data, error } = await supabase
+      .from("coverage_requests")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.warn("Supabase getCoverageRequests error:", error.message);
       return null;
     }
     return data;

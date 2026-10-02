@@ -17,7 +17,11 @@ import { formatPrice } from "../utils/formatters";
 import { toast } from "sonner";
 import { cn } from "../utils/formatters";
 
-export const LineRequestsPage: React.FC = () => {
+interface LineRequestsPageProps {
+  embedded?: boolean;
+}
+
+export const LineRequestsPage: React.FC<LineRequestsPageProps> = ({ embedded = false }) => {
   const { studentRequests, updateStudentRequestStatus } = usePlatform();
 
   // Search & Filter state
@@ -75,8 +79,16 @@ export const LineRequestsPage: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 min-h-[calc(100vh-4rem)] bg-gradient-to-b from-[#f4f7f6] to-background py-6 px-3 sm:px-4 pb-28">
-      <div className="container max-w-3xl mx-auto space-y-5">
+    <div className={cn(
+      "w-full",
+      embedded
+        ? "space-y-4"
+        : "flex-1 min-h-[calc(100vh-4rem)] bg-gradient-to-b from-[#f4f7f6] to-background py-6 px-3 sm:px-4 pb-28"
+    )}>
+      <div className={cn(
+        "space-y-5",
+        embedded ? "w-full" : "container max-w-3xl mx-auto"
+      )}>
         {/* Header */}
         <div className="bg-card border border-border/80 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">

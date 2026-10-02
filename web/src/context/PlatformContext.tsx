@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import type { TransportLine, CoverageRequest, NewLineSubmission, StudentLineRequest, DriverRecord } from "../types";
 import { INITIAL_LINES, INITIAL_STUDENT_REQUESTS, INITIAL_REGISTERED_DRIVERS, ADMIN_CODE } from "../data/initialData";
-import { supabaseService, isSupabaseConfigured } from "../lib/supabase";
+import { supabaseService, isSupabaseConfigured, supabase } from "../lib/supabase";
 
 interface PlatformContextType {
   lines: TransportLine[];
@@ -104,43 +104,103 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
     saveStorage(ADMIN_KEY, isAdmin);
   }, [isAdmin]);
 
-  // Sync with Supabase on mount if configured
+  // Sync with Supabase on mount and listen to realtime updates across all devices
   useEffect(() => {
     if (!isSupabaseConfigured) return;
+
+    const formatRemoteLine = (row: any): TransportLine => ({
+      id: row.id,
+      universityId: row.university_id,
+      driverName: row.driver_name,
+      driverPhone: row.driver_phone,
+      fromArea: row.from_area,
+      toArea: row.to_area,
+      seatsAvailable: row.seats_available,
+      monthlyPrice: row.monthly_price,
+      departTime: row.depart_time,
+      returnTime: row.return_time,
+      vehicle: {
+        kind: row.vehicle_type === "فان" ? "van" : row.vehicle_type === "باص" ? "bus" : "sedan",
+        model: row.vehicle_model,
+        seats: row.total_seats || 4,
+      },
+      gender: "mixed",
+      shift: row.morning_shift && row.evening_shift ? "full" : row.evening_shift ? "evening" : "morning",
+      hasAc: row.air_conditioned ?? true,
+      isPunctual: (row.punctuality || 95) > 90,
+      isVip: row.is_vip || false,
+      vipRequested: row.is_vip || false,
+      vipFeePaid: row.is_vip || false,
+      status: (row.status === "approved" ? "active" : row.status || "active") as any,
+      startPoint: { lat: 30.5085, lng: 47.7804 },
+      createdAt: row.created_at,
+      rating: 4.9,
+      ratingCount: 12,
+    });
+
+    const formatRemoteReq = (row: any): StudentLineRequest => ({
+      id: row.id,
+      studentName: row.student_name,
+      phone: row.phone,
+      universityName: row.university_id,
+      college: "",
+      area: row.area,
+      destinationArea: row.university_id,
+      passengersCount: 1,
+      preferredPrice: 35000,
+      gender: "mixed",
+      shift: "morning",
+      departureTime: "07:30 ص",
+      returnTime: "02:00 م",
+      status: (row.status === "reviewed" ? "contacted" : row.status === "completed" ? "accepted" : "open") as any,
+      notes: "طلب خط مسجل عبر المنصة",
+      createdAt: new Date(row.created_at).toLocaleDateString("ar-IQ"),
+    });
+
+    // 1. Initial fetch of lines
     supabaseService.getLines().then((remoteLines) => {
-      if (remoteLines && remoteLines.length > 0) {
-        const formatted: TransportLine[] = remoteLines.map((row: any) => ({
-          id: row.id,
-          universityId: row.university_id,
-          driverName: row.driver_name,
-          driverPhone: row.driver_phone,
-          fromArea: row.from_area,
-          toArea: row.to_area,
-          seatsAvailable: row.seats_available,
-          monthlyPrice: row.monthly_price,
-          departTime: row.depart_time,
-          returnTime: row.return_time,
-          vehicle: {
-            kind: row.vehicle_type === "فان" ? "van" : row.vehicle_type === "باص" ? "bus" : "sedan",
-            model: row.vehicle_model,
-            seats: row.total_seats || 4,
-          },
-          gender: "mixed",
-          shift: row.morning_shift && row.evening_shift ? "full" : row.evening_shift ? "evening" : "morning",
-          hasAc: row.air_conditioned ?? true,
-          isPunctual: (row.punctuality || 95) > 90,
-          isVip: row.is_vip || false,
-          vipRequested: row.is_vip || false,
-          vipFeePaid: row.is_vip || false,
-          status: (row.status === "approved" ? "active" : row.status || "active") as any,
-          startPoint: { lat: 30.5085, lng: 47.7804 },
-          createdAt: row.created_at,
-          rating: 4.9,
-          ratingCount: 12,
-        }));
-        setLines(formatted);
+      if (remoteLines) {
+        setLines(remoteLines.map(formatRemoteLine));
       }
     });
+
+    // 2. Initial fetch of student line requests
+    supabaseService.getCoverageRequests().then((remoteReqs) => {
+      if (remoteReqs) {
+        setStudentRequests(remoteReqs.map(formatRemoteReq));
+      }
+    });
+
+    // 3. Realtime subscriptions across all clients
+    const channel = supabase
+      .channel("muhandis_realtime_sync")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "transport_lines" },
+        () => {
+          supabaseService.getLines().then((remoteLines) => {
+            if (remoteLines) {
+              setLines(remoteLines.map(formatRemoteLine));
+            }
+          });
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "coverage_requests" },
+        () => {
+          supabaseService.getCoverageRequests().then((remoteReqs) => {
+            if (remoteReqs) {
+              setStudentRequests(remoteReqs.map(formatRemoteReq));
+            }
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const signIn = useCallback((code: string) => {
@@ -266,6 +326,20 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
         createdAt: "الآن",
       };
       setStudentRequests((prev) => [newReq, ...prev]);
+
+      if (isSupabaseConfigured) {
+        supabaseService
+          .submitCoverageRequest({
+            id: newReq.id,
+            student_name: newReq.studentName,
+            phone: newReq.phone,
+            university_id: newReq.universityName,
+            area: newReq.area,
+            status: "pending",
+          })
+          .catch((err) => console.warn("Supabase submitCoverageRequest error:", err));
+      }
+
       return newReq;
     },
     []
@@ -288,6 +362,21 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
         registeredAt: new Date().toISOString(),
       };
       setRegisteredDrivers((prev) => [newRecord, ...prev]);
+
+      if (isSupabaseConfigured) {
+        supabaseService
+          .createProfile({
+            phone: newRecord.phone,
+            name: newRecord.name,
+            role: "driver",
+            area: newRecord.area,
+            vehicle_model: `${newRecord.carName} (${newRecord.carModel}) - ${newRecord.carColor}`,
+            vehicle_kind: newRecord.vehicleKind,
+            total_seats: newRecord.totalSeats,
+          })
+          .catch((err) => console.warn("Supabase createProfile driver error:", err));
+      }
+
       return newRecord;
     },
     []

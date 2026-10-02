@@ -7,7 +7,6 @@ import {
   Minus,
 } from "lucide-react";
 import { UNIVERSITIES, AREAS } from "../../data/initialData";
-import { supabaseService, isSupabaseConfigured } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
 import { usePlatform } from "../../context/PlatformContext";
 import { toast } from "sonner";
@@ -79,7 +78,7 @@ export const RegisterTripSheet: React.FC<RegisterTripSheetProps> = ({
     setSubmitting(true);
 
     try {
-      // Save student line request to Platform context for drivers to view
+      // Save student line request to Platform context (which syncs to Supabase & Realtime)
       submitStudentRequest({
         studentName: user?.name || "طالب مسجل",
         phone: user?.phone || "07800000000",
@@ -94,31 +93,19 @@ export const RegisterTripSheet: React.FC<RegisterTripSheetProps> = ({
         notes: `حجز لـ ${getPersonLabel(personCount)} - ${forWhom === "me" ? "للطالب نفسه" : forWhom === "daughter" ? "لابنتي" : "لابني"}`,
       });
 
-      // Save student trip request to Supabase
-      if (isSupabaseConfigured) {
-        await supabaseService.submitCoverageRequest({
-          student_name: user?.name || "طالب مسجل",
-          phone: user?.phone || "07700000000",
-          university_id: toArea,
-          area: fromArea,
-          status: "pending",
-        });
-      }
-
-      toast.success("تم تسجيل طلب خطك بنجاح! تم نشره للسائقين وجاري عرض الخطوط المناسبة لمسارك...");
+      toast.success("تم تسجيل طلب خطك بنجاح! تم نشره في قسم طلبات الطلاب وجاري إتاحته لجميع السائقين.");
       onClose();
 
-      // Navigate to matching drivers
+      // Navigate to line requests tab so user immediately sees their request
       const params = new URLSearchParams();
+      params.set("tab", "requests");
       params.set("area", fromArea.trim());
-      params.set("shift", shift);
-      params.set("gender", genderType);
       navigate(`/services?${params.toString()}`);
     } catch (err) {
       console.warn("Failed to submit trip request:", err);
-      toast.success("تم تسجيل خطك بنجاح!");
+      toast.success("تم تسجيل طلب خطك بنجاح!");
       onClose();
-      navigate(`/services?area=${encodeURIComponent(fromArea.trim())}`);
+      navigate(`/services?tab=requests&area=${encodeURIComponent(fromArea.trim())}`);
     } finally {
       setSubmitting(false);
     }

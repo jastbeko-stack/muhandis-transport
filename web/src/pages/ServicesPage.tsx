@@ -7,6 +7,8 @@ import {
   ListFilter,
   MapPinned,
   RotateCcw,
+  BusFront,
+  Users,
 } from "lucide-react";
 import { usePlatform } from "../context/PlatformContext";
 import { useAuth } from "../context/AuthContext";
@@ -28,14 +30,32 @@ const SORT_LABELS: Record<FilterState["sort"], string> = {
 
 export const ServicesPage: React.FC = () => {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { activeLines, studentRequests } = usePlatform();
 
-  // If driver, show Line Requests directly
-  if (user?.role === "driver") {
-    return <LineRequestsPage />;
-  }
+  // Tab state: "lines" (خطوط السائقين) vs "requests" (طلبات الطلاب)
+  const [activeTab, setActiveTab] = useState<"lines" | "requests">(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam === "requests") return "requests";
+    if (tabParam === "lines") return "lines";
+    return user?.role === "driver" ? "requests" : "lines";
+  });
 
-  const [searchParams] = useSearchParams();
-  const { activeLines } = usePlatform();
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam === "requests" || tabParam === "lines") {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (tab: "lines" | "requests") => {
+    setActiveTab(tab);
+    setSearchParams((prev) => {
+      const p = new URLSearchParams(prev);
+      p.set("tab", tab);
+      return p;
+    });
+  };
 
   // Initialize filters from URL parameters if available
   const [filters, setFilters] = useState<FilterState>(() => {
@@ -149,15 +169,68 @@ export const ServicesPage: React.FC = () => {
   return (
     <div className="flex-1 w-full max-w-full min-w-0 overflow-x-hidden">
       <main className="w-full max-w-7xl mx-auto px-3 sm:px-6 pt-3 sm:pt-6 pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))] space-y-4 sm:space-y-6 min-w-0 max-w-full overflow-hidden">
-        {/* Header Title */}
-        <div className="space-y-1">
-          <h1 className="font-display text-xl sm:text-3xl font-black text-foreground">
-            الخطوط المعتمدة
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            تصفح جميع خطوط النقل الجامعي المنشورة في البصرة وفلترها حسب جامعتك ومنطقتك وميزانيتك.
-          </p>
+        {/* Navigation Tabs (Available Driver Lines vs Student Line Requests) */}
+        <div className="flex items-center gap-2 p-1.5 bg-card border border-border/80 rounded-2xl shadow-xs">
+          <button
+            type="button"
+            onClick={() => handleTabChange("lines")}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold transition-all",
+              activeTab === "lines"
+                ? "bg-[#286058] text-white shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            )}
+          >
+            <BusFront className="h-4 w-4 shrink-0" />
+            <span>خطوط السائقين المتاحة</span>
+            <span
+              className={cn(
+                "px-2 py-0.5 rounded-full text-[11px] font-black shrink-0",
+                activeTab === "lines" ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"
+              )}
+            >
+              {activeLines.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleTabChange("requests")}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold transition-all",
+              activeTab === "requests"
+                ? "bg-amber-600 text-white shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            )}
+          >
+            <Users className="h-4 w-4 shrink-0" />
+            <span>طلبات الطلاب للخطوط</span>
+            <span
+              className={cn(
+                "px-2 py-0.5 rounded-full text-[11px] font-black shrink-0",
+                activeTab === "requests"
+                  ? "bg-white/20 text-white"
+                  : "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+              )}
+            >
+              {studentRequests.length}
+            </span>
+          </button>
         </div>
+
+        {activeTab === "requests" ? (
+          <LineRequestsPage embedded />
+        ) : (
+          <>
+            {/* Header Title */}
+            <div className="space-y-1">
+              <h1 className="font-display text-xl sm:text-3xl font-black text-foreground">
+                الخطوط المعتمدة
+              </h1>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                تصفح جميع خطوط النقل الجامعي المنشورة في البصرة وفلترها حسب جامعتك ومنطقتك وميزانيتك.
+              </p>
+            </div>
 
         {/* Content Layout */}
         <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)] w-full min-w-0 max-w-full">
@@ -433,7 +506,9 @@ export const ServicesPage: React.FC = () => {
             </div>
           </div>
         </div>
-      </main>
+      </>
+    )}
+  </main>
 
       {/* Mobile Filters Drawer / Bottom Sheet */}
       {mobileFiltersOpen && (

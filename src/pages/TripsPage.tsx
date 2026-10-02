@@ -20,12 +20,19 @@ import { toast } from "sonner";
 
 export const TripsPage: React.FC = () => {
   const { user } = useAuth();
-  const { lines } = usePlatform();
+  const { lines, studentRequests } = usePlatform();
 
   const isDriver = user?.role === "driver";
 
   // Active trip based on user
   const activeTrip = lines.find((l) => (user?.phone && l.driverPhone === user?.phone) || (user?.name && l.driverName === user?.name));
+
+  // User's registered line requests as a student
+  const myStudentRequests = studentRequests.filter(
+    (req) =>
+      (user?.phone && req.phone === user?.phone) ||
+      (user?.name && req.studentName === user?.name)
+  );
 
   // List of driver requests / passengers with acceptance state
   const [passengers, setPassengers] = useState<Array<{
@@ -310,20 +317,94 @@ export const TripsPage: React.FC = () => {
               </a>
             </div>
           </div>
-        ) : (
+        ) : myStudentRequests.length === 0 ? (
           <div className="bg-card border border-border rounded-3xl p-8 text-center space-y-3">
             <BusFront className="h-12 w-12 text-muted-foreground mx-auto" />
             <h3 className="font-bold text-base">لا توجد رحلات نشطة حالياً</h3>
             <p className="text-xs text-muted-foreground">
-              يمكنك استعراض الخطوط المتوفرة لمنطقتك والاشتراك مباشرة
+              يمكنك استعراض الخطوط المتوفرة لمنطقتك والاشتراك أو تسجيل طلب خط جديد
             </p>
-            <Link
-              to="/services"
-              className="inline-flex items-center gap-2 bg-[#286058] text-white font-bold text-xs px-5 py-2.5 rounded-xl mt-2"
-            >
-              استعراض الخطوط
-              <ChevronLeft className="h-4 w-4" />
-            </Link>
+            <div className="flex items-center justify-center gap-2 pt-2">
+              <Link
+                to="/services"
+                className="inline-flex items-center gap-2 bg-[#286058] text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-sm"
+              >
+                استعراض الخطوط
+                <ChevronLeft className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        ) : null}
+
+        {/* User's Submitted Line Requests */}
+        {myStudentRequests.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+                <Users className="h-4 w-4 text-amber-600" />
+                طلبات الخطوط التي سجلتها
+              </h2>
+              <span className="text-[11px] font-bold text-amber-600 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-300">
+                {myStudentRequests.length} طلب معروض
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {myStudentRequests.map((req) => (
+                <div
+                  key={req.id}
+                  className="bg-card border-2 border-amber-400/40 rounded-3xl p-5 shadow-sm space-y-3.5"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-10 w-10 rounded-2xl bg-amber-500/15 text-amber-600 flex items-center justify-center font-bold">
+                        <GraduationCap className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-sm text-foreground">
+                          خط {req.area} ⟵ {req.universityName}
+                        </h3>
+                        <p className="text-[11px] text-muted-foreground">
+                          تاريخ التسجيل: {req.createdAt}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 px-3 py-1 rounded-full border border-amber-300">
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                      معروض لجميع الكباتن
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 py-2 px-3 rounded-2xl bg-muted/40 text-center text-xs">
+                    <div>
+                      <span className="text-[10px] text-muted-foreground block">عدد الركاب</span>
+                      <span className="font-black text-foreground">{req.passengersCount || 1} أشخاص</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-muted-foreground block">الدوام</span>
+                      <span className="font-black text-foreground">
+                        {req.shift === "morning" ? "صباحي" : req.shift === "evening" ? "مسائي" : "كامل"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-muted-foreground block">السعر المقترح</span>
+                      <span className="font-black text-[#246158]">{formatPrice(req.preferredPrice || 35000)}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1 border-t border-border text-[11px]">
+                    <span className="text-muted-foreground">طلبك معروض حالياً لجميع سائقي البصرة</span>
+                    <Link
+                      to="/services?tab=requests"
+                      className="font-bold text-amber-600 hover:text-amber-700 inline-flex items-center gap-1"
+                    >
+                      عرض في طلبات الخطوط
+                      <ChevronLeft className="h-3.5 w-3.5" />
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

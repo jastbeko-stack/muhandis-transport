@@ -93,7 +93,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
           phone: cleanPhone,
           email: email.trim() || undefined,
           role,
-          universityId: role === "student" ? universityId : undefined,
+          universityId,
           area,
           photoUrl: photoUrl || undefined,
           carName: role === "driver" ? carName.trim() : undefined,
@@ -570,6 +570,22 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
                       ))}
                     </select>
                   </div>
+                </div>
+
+                {/* Destination University */}
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-muted-foreground">جامعة الوجهة المقصودة لخطك</label>
+                  <select
+                    value={universityId}
+                    onChange={(e) => setUniversityId(e.target.value)}
+                    className="h-11 w-full rounded-xl border border-input bg-background px-3 text-xs font-bold text-foreground"
+                  >
+                    {UNIVERSITIES.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name} ({u.short})
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* 5. Plate / License number */}
