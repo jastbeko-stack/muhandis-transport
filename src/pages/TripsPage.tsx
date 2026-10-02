@@ -24,48 +24,19 @@ export const TripsPage: React.FC = () => {
 
   const isDriver = user?.role === "driver";
 
-  // Demo active trip based on user or first line
-  const activeTrip = lines.find((l) => l.driverPhone === user?.phone || l.driverName === user?.name) || lines[0];
+  // Active trip based on user
+  const activeTrip = lines.find((l) => (user?.phone && l.driverPhone === user?.phone) || (user?.name && l.driverName === user?.name));
 
-  // Mock list of driver requests / passengers with acceptance state
-  const [passengers, setPassengers] = useState([
-    {
-      id: "req-1",
-      studentName: "مريم العبادي",
-      phone: "07801122334",
-      area: "الزبير - قرب المستشفى",
-      college: "كلية الهندسة - كرمة علي",
-      time: "صباحاً 07:15",
-      status: "confirmed",
-    },
-    {
-      id: "req-2",
-      studentName: "كرار حيدر الجابري",
-      phone: "07709988776",
-      area: "الزبير - ساحة الاحتفالات",
-      college: "كلية العلوم - كرمة علي",
-      time: "صباحاً 07:30",
-      status: "confirmed",
-    },
-    {
-      id: "req-3",
-      studentName: "زينب علي المالكي",
-      phone: "07804455667",
-      area: "الزبير - حي الشهداء",
-      college: "كلية الصيدلة - المعقل",
-      time: "صباحاً 07:20",
-      status: "pending",
-    },
-    {
-      id: "req-4",
-      studentName: "حسين قاسم الأسدي",
-      phone: "07712233445",
-      area: "القبلة - شارع المعارض",
-      college: "جامعة البصرة للنفط والغاز",
-      time: "صباحاً 07:40",
-      status: "pending",
-    },
-  ]);
+  // List of driver requests / passengers with acceptance state
+  const [passengers, setPassengers] = useState<Array<{
+    id: string;
+    studentName: string;
+    phone: string;
+    area: string;
+    college: string;
+    time: string;
+    status: "confirmed" | "pending";
+  }>>([]);
 
   const handleConfirmPassenger = (id: string, name: string) => {
     setPassengers((prev) =>
@@ -165,68 +136,78 @@ export const TripsPage: React.FC = () => {
               </h3>
             </div>
 
-            <div className="space-y-3">
-              {passengers.map((passenger) => (
-                <div
-                  key={passenger.id}
-                  className="bg-card border border-border/80 rounded-2xl p-4 shadow-sm space-y-3 transition-all hover:border-[#246158]/40"
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-sm text-foreground">{passenger.studentName}</h4>
-                        {passenger.status === "confirmed" ? (
-                          <span className="text-[10px] font-black text-green-700 bg-green-50 dark:bg-green-950/40 px-2 py-0.5 rounded-full border border-green-200">
-                            مشترك مؤكد
+            {passengers.length === 0 ? (
+              <div className="bg-card border border-border/80 rounded-2xl p-8 text-center space-y-2">
+                <Users className="h-10 w-10 text-muted-foreground mx-auto opacity-50" />
+                <h4 className="font-bold text-sm text-foreground">لا توجد طلبات ركاب حالياً</h4>
+                <p className="text-xs text-muted-foreground">
+                  ستظهر هنا طلبات اشتراك الطلاب فور انضمامهم لخطك أو تواصلهم معك.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {passengers.map((passenger) => (
+                  <div
+                    key={passenger.id}
+                    className="bg-card border border-border/80 rounded-2xl p-4 shadow-sm space-y-3 transition-all hover:border-[#246158]/40"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-sm text-foreground">{passenger.studentName}</h4>
+                          {passenger.status === "confirmed" ? (
+                            <span className="text-[10px] font-black text-green-700 bg-green-50 dark:bg-green-950/40 px-2 py-0.5 rounded-full border border-green-200">
+                              مشترك مؤكد
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-black text-amber-700 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full border border-amber-300">
+                              طلب انضمام جديد
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-0.5 mt-1 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <GraduationCap className="h-3.5 w-3.5 text-[#246158]" />
+                            {passenger.college}
                           </span>
-                        ) : (
-                          <span className="text-[10px] font-black text-amber-700 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full border border-amber-300">
-                            طلب انضمام جديد
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                            {passenger.area} ({passenger.time})
                           </span>
-                        )}
-                      </div>
-                      <div className="flex flex-col gap-0.5 mt-1 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <GraduationCap className="h-3.5 w-3.5 text-[#246158]" />
-                          {passenger.college}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                          {passenger.area} ({passenger.time})
-                        </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-center gap-2 pt-2 border-t border-border">
-                    {passenger.status === "pending" && (
-                      <button
-                        type="button"
-                        onClick={() => handleConfirmPassenger(passenger.id, passenger.studentName)}
-                        className="flex-1 py-2 rounded-xl bg-[#286058] hover:bg-[#204e47] text-white font-bold text-xs flex items-center justify-center gap-1 transition-all active:scale-95"
+                    <div className="flex items-center gap-2 pt-2 border-t border-border">
+                      {passenger.status === "pending" && (
+                        <button
+                          type="button"
+                          onClick={() => handleConfirmPassenger(passenger.id, passenger.studentName)}
+                          className="flex-1 py-2 rounded-xl bg-[#286058] hover:bg-[#204e47] text-white font-bold text-xs flex items-center justify-center gap-1 transition-all active:scale-95"
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          قبول وتأكيد
+                        </button>
+                      )}
+                      <Link
+                        to="/messages"
+                        className="flex-1 py-2 rounded-xl border border-border hover:bg-muted font-bold text-xs flex items-center justify-center gap-1 transition-all active:scale-95 text-foreground"
                       >
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                        قبول وتأكيد
-                      </button>
-                    )}
-                    <Link
-                      to="/messages"
-                      className="flex-1 py-2 rounded-xl border border-border hover:bg-muted font-bold text-xs flex items-center justify-center gap-1 transition-all active:scale-95 text-foreground"
-                    >
-                      <MessageSquare className="h-3.5 w-3.5 text-[#246158]" />
-                      مراسلة
-                    </Link>
-                    <a
-                      href={`tel:${passenger.phone}`}
-                      className="py-2 px-3 rounded-xl border border-border hover:bg-muted font-bold text-xs flex items-center justify-center gap-1 transition-all active:scale-95 text-[#246158]"
-                      title="اتصال هاتفي"
-                    >
-                      <Phone className="h-3.5 w-3.5" />
-                    </a>
+                        <MessageSquare className="h-3.5 w-3.5 text-[#246158]" />
+                        مراسلة
+                      </Link>
+                      <a
+                        href={`tel:${passenger.phone}`}
+                        className="py-2 px-3 rounded-xl border border-border hover:bg-muted font-bold text-xs flex items-center justify-center gap-1 transition-all active:scale-95 text-[#246158]"
+                        title="اتصال هاتفي"
+                      >
+                        <Phone className="h-3.5 w-3.5" />
+                      </a>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -27,7 +27,7 @@ interface AuthPageProps {
 
 export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
   const navigate = useNavigate();
-  const { loginWithPhone, loginWithEmail, register, quickDemoLogin } = useAuth();
+  const { loginWithPhone, loginWithEmail, register } = useAuth();
   const { submitLine, addDriverRecord } = usePlatform();
 
   // Selected Role: student vs driver
@@ -178,19 +178,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
       toast.error("حدث خطأ أثناء تسجيل الدخول، يرجى المحاولة ثانية");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleQuickDemo = (selectedRole: UserRole) => {
-    quickDemoLogin(selectedRole);
-    toast.success(
-      `تم الدخول السريع بحساب تجريبي كـ ${selectedRole === "student" ? "طالب (زينب)" : "سائق (أبو مصطفى)"}`
-    );
-    onSuccess?.();
-    if (selectedRole === "driver") {
-      navigate("/driver");
-    } else {
-      navigate("/");
     }
   };
 
@@ -636,37 +623,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
             </button>
           </div>
 
-          {/* Quick Demo Login Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="bg-card px-2 font-bold text-muted-foreground">
-                أو تجربة سريعة بضغطة زر
-              </span>
-            </div>
-          </div>
-
-          {/* 1-Click Quick Demo Buttons */}
-          <div className="grid grid-cols-2 gap-2.5">
-            <button
-              type="button"
-              onClick={() => handleQuickDemo("student")}
-              className="flex items-center justify-center gap-1.5 rounded-xl border border-primary/30 bg-primary/5 py-2.5 text-xs font-black text-primary dark:text-gold transition-all hover:bg-primary/10 active:scale-95"
-            >
-              <GraduationCap className="h-4 w-4" />
-              دخول كـ طالب
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickDemo("driver")}
-              className="flex items-center justify-center gap-1.5 rounded-xl border border-gold/40 bg-gold/10 py-2.5 text-xs font-black text-navy-deep dark:text-gold transition-all hover:bg-gold/20 active:scale-95"
-            >
-              <Bus className="h-4 w-4" />
-              دخول كـ سائق
-            </button>
-          </div>
         </div>
       </div>
     </div>

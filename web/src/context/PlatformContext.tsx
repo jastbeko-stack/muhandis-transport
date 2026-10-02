@@ -29,11 +29,26 @@ interface PlatformContextType {
   resetDemoData: () => void;
 }
 
-const LINES_KEY = "khutoot.lines.v1";
-const REQUESTS_KEY = "khutoot.requests.v1";
-const STUDENT_REQUESTS_KEY = "khutoot.student_requests.v1";
-const DRIVERS_KEY = "khutoot.drivers.v1";
-const ADMIN_KEY = "khutoot.admin.v1";
+const LINES_KEY = "khutoot.lines.v2";
+const REQUESTS_KEY = "khutoot.requests.v2";
+const STUDENT_REQUESTS_KEY = "khutoot.student_requests.v2";
+const DRIVERS_KEY = "khutoot.drivers.v2";
+const ADMIN_KEY = "khutoot.admin.v2";
+
+// One-time purge of legacy v1 demo data from client localStorage
+if (typeof window !== "undefined") {
+  [
+    "khutoot.lines.v1",
+    "khutoot.requests.v1",
+    "khutoot.student_requests.v1",
+    "khutoot.drivers.v1",
+    "khutoot.admin.v1",
+  ].forEach((k) => {
+    try {
+      window.localStorage.removeItem(k);
+    } catch (_) {}
+  });
+}
 
 function loadStorage<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -292,10 +307,10 @@ export function PlatformProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const resetDemoData = useCallback(() => {
-    setLines(INITIAL_LINES);
+    setLines([]);
     setCoverageRequests([]);
-    setStudentRequests(INITIAL_STUDENT_REQUESTS);
-    setRegisteredDrivers(INITIAL_REGISTERED_DRIVERS);
+    setStudentRequests([]);
+    setRegisteredDrivers([]);
   }, []);
 
   const activeLines = useMemo(() => lines.filter((line) => line.status === "active"), [lines]);

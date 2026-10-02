@@ -9,7 +9,6 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { usePlatform } from "../context/PlatformContext";
 import { DriverAvatar } from "../components/common/DriverAvatar";
 import { cn } from "../utils/formatters";
 
@@ -36,141 +35,25 @@ interface Conversation {
 
 export const MessagesPage: React.FC = () => {
   const { user } = useAuth();
-  const { activeLines } = usePlatform();
   const isDriver = user?.role === "driver";
 
   // Conversations list
-  const defaultConversations: Conversation[] = isDriver
-    ? [
-        {
-          id: "conv-1",
-          partnerName: "مريم العبادي",
-          partnerRole: "student",
-          partnerInfo: "كلية الهندسة • الزبير",
-          partnerPhone: "07801122334",
-          unreadCount: 1,
-          lastMessage: "السلام عليكم كابتن، متى وقت الانطلاق من نقطة التجمع؟",
-          lastTime: "07:15 ص",
-          avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80",
-        },
-        {
-          id: "conv-2",
-          partnerName: "كرار حيدر الجابري",
-          partnerRole: "student",
-          partnerInfo: "كلية العلوم • ساحة الاحتفالات",
-          partnerPhone: "07709988776",
-          unreadCount: 0,
-          lastMessage: "تم كابتن، أنا متواجد عند المحطة الآن.",
-          lastTime: "أمس",
-          avatarUrl: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
-        },
-        {
-          id: "conv-3",
-          partnerName: "فاطمة الزهراء علي",
-          partnerRole: "student",
-          partnerInfo: "كلية الصيدلة • الطوبة",
-          partnerPhone: "07812233445",
-          unreadCount: 0,
-          lastMessage: "شكراً كابتن على الالتزام بالوقت اليوم.",
-          lastTime: "منذ يومين",
-          avatarUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80",
-        },
-      ]
-    : [
-        {
-          id: "conv-driver",
-          partnerName: activeLines[0]?.driverName || "كابتن أبو مصطفى الحلفي",
-          partnerRole: "driver",
-          partnerInfo: `خط ${activeLines[0]?.fromArea || "الزبير"} ← ${activeLines[0]?.toArea || "كرمة علي"}`,
-          partnerPhone: activeLines[0]?.driverPhone || "07701234567",
-          unreadCount: 1,
-          lastMessage: "صباح الخير، سأمر عليكم خلال 10 دقائق جهزوا أنفسكم.",
-          lastTime: "07:20 ص",
-          avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80",
-        },
-      ];
+  const defaultConversations: Conversation[] = [];
 
   const [conversations] = useState<Conversation[]>(defaultConversations);
-  const [activeConvId, setActiveConvId] = useState<string>(defaultConversations[0]?.id || "");
-  const [mobileView, setMobileView] = useState<"list" | "chat">("chat");
+  const [activeConvId, setActiveConvId] = useState<string>("");
+  const [mobileView, setMobileView] = useState<"list" | "chat">("list");
   const [searchQuery, setSearchQuery] = useState("");
   const [inputText, setInputText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Selected conversation
-  const currentConv = conversations.find((c) => c.id === activeConvId) || conversations[0];
+  const currentConv = conversations.find((c) => c.id === activeConvId);
 
   // Chat message history per conversation
-  const [messages, setMessages] = useState<Record<string, ChatMessage[]>>(() => {
-    return {
-      "conv-1": [
-        {
-          id: "m-1",
-          senderId: "student-1",
-          senderName: "مريم العبادي",
-          senderRole: "student",
-          text: "السلام عليكم كابتن، متى وقت الانطلاق من نقطة التجمع؟",
-          timestamp: "07:15 ص",
-        },
-      ],
-      "conv-2": [
-        {
-          id: "m-2",
-          senderId: "driver-me",
-          senderName: "أنا",
-          senderRole: "driver",
-          text: "صباح الخير كرار، هل وصلت للنقطة؟",
-          timestamp: "أمس 07:10 ص",
-        },
-        {
-          id: "m-3",
-          senderId: "student-2",
-          senderName: "كرار حيدر الجابري",
-          senderRole: "student",
-          text: "تم كابتن، أنا متواجد عند المحطة الآن.",
-          timestamp: "أمس 07:12 ص",
-        },
-      ],
-      "conv-3": [
-        {
-          id: "m-4",
-          senderId: "student-3",
-          senderName: "فاطمة الزهراء علي",
-          senderRole: "student",
-          text: "شكراً كابتن على الالتزام بالوقت اليوم.",
-          timestamp: "منذ يومين",
-        },
-      ],
-      "conv-driver": [
-        {
-          id: "md-1",
-          senderId: "driver-1",
-          senderName: activeLines[0]?.driverName || "كابتن أبو مصطفى الحلفي",
-          senderRole: "driver",
-          text: "أهلاً بك معنا في الخط الجامعي! وقت الانطلاق الصباحي 07:30 ص.",
-          timestamp: "07:05 ص",
-        },
-        {
-          id: "md-2",
-          senderId: "student-me",
-          senderName: "أنا",
-          senderRole: "student",
-          text: "تمام كابتن، سأكون في نقطة التجمع قبل الوقت إن شاء الله.",
-          timestamp: "07:12 ص",
-        },
-        {
-          id: "md-3",
-          senderId: "driver-1",
-          senderName: activeLines[0]?.driverName || "كابتن أبو مصطفى الحلفي",
-          senderRole: "driver",
-          text: "صباح الخير، سأمر عليكم خلال 10 دقائق جهزوا أنفسكم.",
-          timestamp: "07:20 ص",
-        },
-      ],
-    };
-  });
+  const [messages, setMessages] = useState<Record<string, ChatMessage[]>>({});
 
-  const activeMessages = messages[activeConvId] || [];
+  const activeMessages = activeConvId ? (messages[activeConvId] || []) : [];
 
   // Filtered conversations
   const filteredConversations = conversations.filter((c) => {
@@ -186,7 +69,7 @@ export const MessagesPage: React.FC = () => {
 
   const handleSendMessage = (textToSend?: string) => {
     const text = (textToSend || inputText).trim();
-    if (!text) return;
+    if (!text || !currentConv || !activeConvId) return;
 
     const newMsg: ChatMessage = {
       id: `msg-${Date.now()}`,
@@ -292,64 +175,74 @@ export const MessagesPage: React.FC = () => {
             </div>
 
             {/* Conversations Scroll List */}
-            <div className="flex-1 overflow-y-auto divide-y divide-border/60">
-              {filteredConversations.map((conv) => {
-                const isSelected = conv.id === activeConvId;
-                return (
-                  <button
-                    key={conv.id}
-                    type="button"
-                    onClick={() => handleSelectConv(conv.id)}
-                    className={cn(
-                      "w-full flex items-center gap-3 p-3.5 text-start transition-all",
-                      isSelected
-                        ? "bg-[#eaf4f2]/70 dark:bg-[#286058]/20"
-                        : "hover:bg-muted/40"
-                    )}
-                  >
-                    <div className="relative shrink-0">
-                      {conv.avatarUrl ? (
-                        <img
-                          src={conv.avatarUrl}
-                          alt={conv.partnerName}
-                          className="h-12 w-12 rounded-2xl object-cover border border-border shadow-sm"
-                        />
-                      ) : (
-                        <DriverAvatar
-                          name={conv.partnerName}
-                          size="md"
-                          ring={conv.partnerRole === "driver" ? "gold" : "muted"}
-                        />
+            <div className="flex-1 overflow-y-auto divide-y divide-border/60 flex flex-col">
+              {filteredConversations.length === 0 ? (
+                <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-2">
+                  <MessageSquare className="h-10 w-10 text-muted-foreground/30 mx-auto" />
+                  <p className="text-xs font-bold text-foreground">لا توجد محادثات</p>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    ستظهر محادثاتك مع الركاب أو السائقين هنا عند بدء التواصل.
+                  </p>
+                </div>
+              ) : (
+                filteredConversations.map((conv) => {
+                  const isSelected = conv.id === activeConvId;
+                  return (
+                    <button
+                      key={conv.id}
+                      type="button"
+                      onClick={() => handleSelectConv(conv.id)}
+                      className={cn(
+                        "w-full flex items-center gap-3 p-3.5 text-start transition-all",
+                        isSelected
+                          ? "bg-[#eaf4f2]/70 dark:bg-[#286058]/20"
+                          : "hover:bg-muted/40"
                       )}
-                      <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 border-2 border-card" />
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-0.5">
-                        <h4 className="font-bold text-xs sm:text-sm text-foreground truncate">
-                          {conv.partnerName}
-                        </h4>
-                        <span className="text-[10px] text-muted-foreground font-mono shrink-0">
-                          {conv.lastTime}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground truncate mb-1">
-                        {conv.lastMessage}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-medium text-[#286058] dark:text-[#52b7a9] bg-muted/60 px-2 py-0.5 rounded-md truncate max-w-[170px]">
-                          {conv.partnerInfo}
-                        </span>
-                        {conv.unreadCount > 0 && (
-                          <span className="grid h-4 w-4 place-items-center rounded-full bg-[#286058] text-[9px] font-black text-white shrink-0">
-                            {conv.unreadCount}
-                          </span>
+                    >
+                      <div className="relative shrink-0">
+                        {conv.avatarUrl ? (
+                          <img
+                            src={conv.avatarUrl}
+                            alt={conv.partnerName}
+                            className="h-12 w-12 rounded-2xl object-cover border border-border shadow-sm"
+                          />
+                        ) : (
+                          <DriverAvatar
+                            name={conv.partnerName}
+                            size="md"
+                            ring={conv.partnerRole === "driver" ? "gold" : "muted"}
+                          />
                         )}
+                        <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 border-2 border-card" />
                       </div>
-                    </div>
-                  </button>
-                );
-              })}
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-0.5">
+                          <h4 className="font-bold text-xs sm:text-sm text-foreground truncate">
+                            {conv.partnerName}
+                          </h4>
+                          <span className="text-[10px] text-muted-foreground font-mono shrink-0">
+                            {conv.lastTime}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground truncate mb-1">
+                          {conv.lastMessage}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-medium text-[#286058] dark:text-[#52b7a9] bg-muted/60 px-2 py-0.5 rounded-md truncate max-w-[170px]">
+                            {conv.partnerInfo}
+                          </span>
+                          {conv.unreadCount > 0 && (
+                            <span className="grid h-4 w-4 place-items-center rounded-full bg-[#286058] text-[9px] font-black text-white shrink-0">
+                              {conv.unreadCount}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })
+              )}
             </div>
           </div>
 
@@ -362,8 +255,20 @@ export const MessagesPage: React.FC = () => {
               mobileView === "list" ? "hidden lg:flex" : "flex"
             )}
           >
-            {/* Top Chat Header */}
-            <div className="flex items-center justify-between border-b border-border bg-card/95 px-3 sm:px-5 py-2.5 backdrop-blur-md shrink-0 pt-[max(0.6rem,env(safe-area-inset-top,0px))]">
+            {!currentConv ? (
+              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-3 bg-[#f8f9fa] dark:bg-muted/10">
+                <div className="h-16 w-16 rounded-3xl bg-muted/60 grid place-items-center text-muted-foreground/60 shadow-sm">
+                  <MessageSquare className="h-8 w-8 stroke-[1.8]" />
+                </div>
+                <h3 className="font-display font-bold text-base text-foreground">لا توجد محادثة محددة</h3>
+                <p className="text-xs text-muted-foreground max-w-xs leading-relaxed">
+                  اختر محادثة من القائمة للتواصل، أو تواصل مع كابتن الخط والركاب من صفحة الخطوط والطلبات.
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Top Chat Header */}
+                <div className="flex items-center justify-between border-b border-border bg-card/95 px-3 sm:px-5 py-2.5 backdrop-blur-md shrink-0 pt-[max(0.6rem,env(safe-area-inset-top,0px))]">
               <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                 {/* Back button to list on mobile if multiple conversations */}
                 {isDriver && (
@@ -516,6 +421,8 @@ export const MessagesPage: React.FC = () => {
                 <Send className="h-4 w-4 rtl:rotate-180" />
               </button>
             </form>
+              </>
+            )}
           </div>
         </div>
       </div>

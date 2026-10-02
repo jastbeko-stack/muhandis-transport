@@ -25,19 +25,17 @@ import { toast } from "sonner";
 
 export const DriverPortalPage: React.FC = () => {
   const { user, logout, switchRole } = useAuth();
-  const { lines, approveLine, updateLineSeats } = usePlatform();
+  const { lines, studentRequests, approveLine, updateLineSeats } = usePlatform();
   const [addLineOpen, setAddLineOpen] = useState(false);
 
-  // Find driver's line or default to first line for demo
-  const driverLine =
-    lines.find((l) => l.driverPhone === user?.phone || l.driverName === user?.name) ||
-    lines[0];
+  // Find driver's line matching current user's phone or name
+  const driverLine = lines.find((l) => (user?.phone && l.driverPhone === user?.phone) || (user?.name && l.driverName === user?.name));
 
   const [availableSeats, setAvailableSeats] = useState(
-    driverLine ? driverLine.seatsAvailable : 3
+    driverLine ? driverLine.seatsAvailable : (user?.totalSeats || 4)
   );
 
-  const totalSeats = driverLine ? driverLine.vehicle.seats : 4;
+  const totalSeats = driverLine ? driverLine.vehicle.seats : (user?.totalSeats || 4);
   const occupiedSeats = Math.max(0, totalSeats - availableSeats);
   const monthlyPrice = driverLine ? driverLine.monthlyPrice : 35000;
   const estimatedIncome = occupiedSeats * monthlyPrice;
@@ -58,34 +56,6 @@ export const DriverPortalPage: React.FC = () => {
       toast.success("تم تفعيل طلب الترقية إلى VIP بإطار ذهبي!");
     }
   };
-
-  // Mock list of recent student booking requests
-  const recentStudentRequests = [
-    {
-      id: "req-1",
-      studentName: "مريم العبادي",
-      phone: "07801122334",
-      area: "الزبير - قرب المستشفى",
-      college: "كلية الهندسة - كرمة علي",
-      time: "منذ ساعتين",
-    },
-    {
-      id: "req-2",
-      studentName: "كرار حيدر الجابري",
-      phone: "07709988776",
-      area: "الزبير - ساحة الاحتفالات",
-      college: "كلية العلوم - كرمة علي",
-      time: "أمس",
-    },
-    {
-      id: "req-3",
-      studentName: "فاطمة الزهراء علي",
-      phone: "07812233445",
-      area: "الطوبة والنخيلة",
-      college: "كلية الصيدلة - كرمة علي",
-      time: "منذ 3 أيام",
-    },
-  ];
 
   return (
     <div className="flex-1 bg-background py-6 sm:py-10">
@@ -242,7 +212,7 @@ export const DriverPortalPage: React.FC = () => {
             </div>
           </div>
 
-          {driverLine && (
+          {driverLine ? (
             <div className="grid gap-4 sm:grid-cols-2">
               {/* Route Info */}
               <div className="rounded-2xl border border-border bg-muted/20 p-4 space-y-2">
@@ -272,10 +242,18 @@ export const DriverPortalPage: React.FC = () => {
                 </p>
               </div>
             </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-border p-6 text-center space-y-2">
+              <Bus className="h-8 w-8 text-muted-foreground mx-auto opacity-50" />
+              <p className="text-xs font-bold text-foreground">لم تقم بإضافة خط حتى الآن</p>
+              <p className="text-[11px] text-muted-foreground">
+                أضف خطك الآن ليظهر لجميع طلاب كليات وجامعات البصرة.
+              </p>
+            </div>
           )}
 
           {/* VIP Upgrade Callout for Driver */}
-          {!driverLine?.isVip && (
+          {driverLine && !driverLine?.isVip && (
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-gold/40 bg-gradient-to-r from-gold/10 via-card to-card p-4">
               <div className="flex items-center gap-3">
                 <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gold text-navy-deep shadow-md">
@@ -312,40 +290,50 @@ export const DriverPortalPage: React.FC = () => {
               </h2>
             </div>
             <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary dark:text-gold">
-              {recentStudentRequests.length} طلبات
+              {studentRequests.length} طلبات
             </span>
           </div>
 
-          <div className="divide-y divide-border">
-            {recentStudentRequests.map((req) => (
-              <div
-                key={req.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3.5"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-display text-sm font-extrabold text-foreground">
-                      {req.studentName}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">{req.time}</span>
+          {studentRequests.length === 0 ? (
+            <div className="py-8 text-center space-y-2">
+              <Users className="h-10 w-10 text-muted-foreground mx-auto opacity-40" />
+              <p className="text-xs font-bold text-foreground">لا توجد طلبات حجز حالياً</p>
+              <p className="text-[11px] text-muted-foreground">
+                ستظهر هنا طلبات الطلاب المفتوحة الباحثين عن خطوط تناسب مناطقهم.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {studentRequests.slice(0, 5).map((req) => (
+                <div
+                  key={req.id}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3.5"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-display text-sm font-extrabold text-foreground">
+                        {req.studentName}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">{req.createdAt}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {req.college || req.universityName} • <span className="text-foreground">{req.area}</span>
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {req.college} • <span className="text-foreground">{req.area}</span>
-                  </p>
-                </div>
 
-                <div className="flex items-center gap-2">
-                  <Link
-                    to="/messages"
-                    className="flex items-center gap-1.5 rounded-xl bg-[#286058] hover:bg-[#204e47] px-4 py-2 text-xs font-bold text-white shadow-sm transition-all active:scale-95"
-                  >
-                    <MessageSquare className="h-4 w-4" />
-                    مراسلة داخل البرنامج
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      to="/messages"
+                      className="flex items-center gap-1.5 rounded-xl bg-[#286058] hover:bg-[#204e47] px-4 py-2 text-xs font-bold text-white shadow-sm transition-all active:scale-95"
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      مراسلة داخل البرنامج
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

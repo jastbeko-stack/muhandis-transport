@@ -21,7 +21,13 @@ function loadSavedUser(): AuthUser | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = localStorage.getItem(AUTH_KEY);
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && (parsed.id === "usr-demo-student" || parsed.id === "usr-demo-driver")) {
+      localStorage.removeItem(AUTH_KEY);
+      return null;
+    }
+    return parsed;
   } catch {
     return null;
   }

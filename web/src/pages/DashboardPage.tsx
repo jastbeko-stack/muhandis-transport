@@ -77,7 +77,7 @@ export const DashboardPage: React.FC = () => {
 
   const handleResetData = () => {
     resetDemoData();
-    toast.success("تمت إعادة البيانات التجريبية بنجاح");
+    toast.success("تم تصفير جميع البيانات بنجاح");
   };
 
   if (!isAdmin) {
@@ -113,7 +113,7 @@ export const DashboardPage: React.FC = () => {
           </form>
 
           <div className="mt-6 rounded-xl bg-muted/50 p-3 text-xs text-muted-foreground">
-            رمز الدخول التجريبي: <span className="font-mono font-bold text-foreground">ht8k</span>
+            رمز الدخول الإداري: <span className="font-mono font-bold text-foreground">ht8k</span>
           </div>
         </div>
       </div>
@@ -142,7 +142,7 @@ export const DashboardPage: React.FC = () => {
               className="flex h-10 items-center gap-2 rounded-xl bg-white/5 px-4 text-xs font-bold text-white/80 ring-1 ring-white/15 hover:bg-white/10"
             >
               <RotateCcw className="h-4 w-4" />
-              إعادة البيانات
+              تصفير البيانات
             </button>
             <button
               type="button"
